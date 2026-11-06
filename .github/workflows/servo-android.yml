@@ -29,12 +29,14 @@ jobs:
     steps:
       - name: Liberar espaço em disco
         run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL
           sudo apt-get clean
           df -h /
 
       - name: Criar memória de troca (swap)
         run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           sudo swapoff -a || true
           sudo fallocate -l 10G /mnt/swapfile
           sudo chmod 600 /mnt/swapfile
@@ -43,31 +45,54 @@ jobs:
           free -h
 
       - name: Baixar o código do Servo
-        run: git clone --depth 1 --branch "$SERVO_REF" https://github.com/servo/servo.git servo
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          git clone --depth 1 --branch "$SERVO_REF" https://github.com/servo/servo.git servo
 
       - name: Instalar SDK e NDK do Android
         run: |
-          sudo chown -R "$USER" "$ANDROID_SDK_ROOT"
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          ls "$ANDROID_SDK_ROOT" || true
+          java -version
           SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "sdkmanager não encontrado, baixando as ferramentas..."
+            curl -fsSL -o cmdtools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q cmdtools.zip -d cmdtools-tmp
+            sudo mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+            sudo rm -rf "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+            sudo mv cmdtools-tmp/cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          fi
+          sudo chown -R "$USER" "$ANDROID_SDK_ROOT"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" --install "build-tools;36.0.0" "platform-tools" "platforms;android-37" "ndk;$NDK_VERSION"
+          "$SDKMANAGER" --list_installed || true
+          for pkg in "build-tools;36.0.0" "platform-tools" "platforms;android-37" "ndk;$NDK_VERSION"; do
+            echo "Instalando $pkg"
+            "$SDKMANAGER" --install "$pkg"
+          done
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
 
       - name: Instalar uv
         run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Instalar dependências do Servo
         working-directory: servo
-        run: ./mach bootstrap --force
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          ./mach bootstrap --force
 
       - name: Compilar para Android
         working-directory: servo
-        run: ./mach build --release --android
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          ./mach build --release --android
 
       - name: Reunir e assinar os APKs
         run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           mkdir -p out
           find servo -name '*.apk' -print | tee apks.txt
           if [ ! -s apks.txt ]; then
@@ -99,3 +124,17 @@ jobs:
           gh release create "servo-teste-${{ github.run_number }}" out/*.apk \
             --title "Servo para Android (teste ${{ github.run_number }})" \
             --notes "Servo ${SERVO_REF}, NDK ${NDK_VERSION}. Instale o APK no celular para testar."
+
+      - name: Guardar o log da falha
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sleep 3
+          mkdir logrepo
+          cd logrepo
+          git init -q -b logs
+          tail -n 400 "$RUNNER_TEMP/full.log" > log.txt || echo "sem log" > log.txt
+          git add log.txt
+          git -c user.name=ci -c user.email=ci@example.com commit -q -m "log da falha"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" logs
