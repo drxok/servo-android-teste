@@ -1,0 +1,101 @@
+name: Compilar Servo (Android)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/servo-android.yml"
+  workflow_dispatch:
+    inputs:
+      servo_ref:
+        description: "Versão do Servo (branch ou tag)"
+        default: "main"
+      ndk_version:
+        description: "Versão do NDK do Android"
+        default: "29.0.14206865"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      SERVO_REF: ${{ inputs.servo_ref || 'main' }}
+      NDK_VERSION: ${{ inputs.ndk_version || '29.0.14206865' }}
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          sudo apt-get clean
+          df -h /
+
+      - name: Criar memória de troca (swap)
+        run: |
+          sudo swapoff -a || true
+          sudo fallocate -l 10G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
+      - name: Baixar o código do Servo
+        run: git clone --depth 1 --branch "$SERVO_REF" https://github.com/servo/servo.git servo
+
+      - name: Instalar SDK e NDK do Android
+        run: |
+          sudo chown -R "$USER" "$ANDROID_SDK_ROOT"
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install "build-tools;36.0.0" "platform-tools" "platforms;android-37" "ndk;$NDK_VERSION"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+
+      - name: Instalar uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Instalar dependências do Servo
+        working-directory: servo
+        run: ./mach bootstrap --force
+
+      - name: Compilar para Android
+        working-directory: servo
+        run: ./mach build --release --android
+
+      - name: Reunir e assinar os APKs
+        run: |
+          mkdir -p out
+          find servo -name '*.apk' -print | tee apks.txt
+          if [ ! -s apks.txt ]; then
+            echo "Nenhum APK foi gerado. Conteúdo de servo/target:"
+            find servo/target -maxdepth 4 -type d | head -50
+            exit 1
+          fi
+          BT="$ANDROID_SDK_ROOT/build-tools/36.0.0"
+          keytool -genkeypair -keystore debug.jks -alias servo -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android -dname "CN=Servo Teste"
+          while read -r f; do
+            base="$(basename "$f" .apk)"
+            case "$base" in
+              *unsigned*)
+                "$BT/zipalign" -f 4 "$f" "aligned.apk"
+                "$BT/apksigner" sign --ks debug.jks --ks-pass pass:android --out "out/${base}-assinado.apk" aligned.apk
+                ;;
+              *)
+                cp "$f" "out/${base}.apk"
+                ;;
+            esac
+          done < apks.txt
+          ls -la out
+
+      - name: Publicar APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "servo-teste-${{ github.run_number }}" out/*.apk \
+            --title "Servo para Android (teste ${{ github.run_number }})" \
+            --notes "Servo ${SERVO_REF}, NDK ${NDK_VERSION}. Instale o APK no celular para testar."
