@@ -66,7 +66,7 @@ jobs:
           sudo chown -R "$USER" "$ANDROID_SDK_ROOT"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" --list_installed || true
-          for pkg in "build-tools;36.0.0" "platform-tools" "platforms;android-37" "ndk;$NDK_VERSION"; do
+          for pkg in "build-tools;36.0.0" "platform-tools" "platforms;android-37.0" "ndk;$NDK_VERSION"; do
             echo "Instalando $pkg"
             "$SDKMANAGER" --install "$pkg"
           done
