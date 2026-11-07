@@ -111,17 +111,29 @@ jobs:
                 "$BT/apksigner" sign --ks debug.jks --ks-pass pass:android --out "out/${base}-assinado.apk" aligned.apk
                 ;;
               *)
-                cp "$f" "out/${base}.apk"
+                [ -e "out/${base}.apk" ] || cp "$f" "out/${base}.apk"
                 ;;
             esac
           done < apks.txt
-          ls -la out
+          rm -f out/servoapp.apk; ls -la out
 
-      - name: Publicar APKs
+      - name: Guardar APK como arquivo da execução
+        uses: actions/upload-artifact@v4
+        with:
+          name: servo-android-apk
+          path: out/servoapp-arm64Release.apk
+          retention-days: 30
+          compression-level: 0
+
+      - name: Publicar APK no Release
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "servo-teste-${{ github.run_number }}" out/*.apk \
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          gh release create "servo-teste-${{ github.run_number }}" out/servoapp-arm64Release.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
             --title "Servo para Android (teste ${{ github.run_number }})" \
             --notes "Servo ${SERVO_REF}, NDK ${NDK_VERSION}. Instale o APK no celular para testar."
 
