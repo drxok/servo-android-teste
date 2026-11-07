@@ -138,4 +138,22 @@ edit(
          "        override fun onHistoryChanged(canGoBack: Boolean, canGoForward: Boolean) {\n"),
     ],
 )
+edit(
+    f"{base}/Servo.kt",
+    [
+        (
+            "startInputMethod { _ -> BaseInputConnection(view, true) }",
+            "startInputMethod { outAttrs ->\n"
+            "                        outAttrs.inputType =\n"
+            "                            android.text.InputType.TYPE_CLASS_TEXT or\n"
+            "                                android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD or\n"
+            "                                android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS\n"
+            "                        outAttrs.imeOptions =\n"
+            "                            android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN or\n"
+            "                                android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI\n"
+            "                        BaseInputConnection(view, false)\n"
+            "                    }",
+        )
+    ],
+)
 print("patch ok")
