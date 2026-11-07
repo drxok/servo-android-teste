@@ -11,7 +11,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -141,7 +141,7 @@ fun BrowserTheme(content: @Composable () -> Unit) {
         }
 
     val context = LocalContext.current
-    SideEffect {
+    LaunchedEffect(dark) {
         (context as? ComponentActivity)?.enableEdgeToEdge(
             statusBarStyle =
                 SystemBarStyle.auto(

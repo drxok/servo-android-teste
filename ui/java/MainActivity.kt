@@ -388,8 +388,8 @@ private fun Dock(
                                     imeAction = ImeAction.Go,
                                 ),
                             onKeyboardAction = {
-                                onSubmit(urlState.text.toString())
                                 focusManager.clearFocus()
+                                onSubmit(urlState.text.toString())
                             },
                         )
                     }
