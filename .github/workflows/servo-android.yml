@@ -75,6 +75,8 @@ jobs:
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           # Deixa o código-fonte "antigo" para o cargo reaproveitar o cache
           find servo -path servo/target -prune -o -path servo/.git -prune -o -type f -exec touch -d '2020-01-01' {} +
+          python3 ui/patch.py servo
+          cp ui/rust/adblock.rs servo/ports/servoshell/adblock.rs
           APP=servo/support/android/apk/servoapp/src/main
           cp ui/java/*.kt "$APP/java/org/servo/servoshell/"
           cp ui/res/values/*.xml "$APP/res/values/"

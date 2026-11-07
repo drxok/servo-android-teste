@@ -14,7 +14,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -26,6 +28,8 @@ object Prefs {
     const val ACCENT = "accent" // lilac | blue | green | pink | orange
     const val ENGINE = "engine" // ddg | google | bing
     const val HTTPS_ONLY = "https_only"
+    const val BLOCK_TRACKERS = "block_trackers"
+    const val PAGE_DARK = "page_dark" // off | auto | force
 }
 
 class Accent(
@@ -187,4 +191,62 @@ object Motion {
     fun <T> effects() = spring<T>(dampingRatio = 1f, stiffness = 1600f)
 
     fun <T> fastEffects() = spring<T>(dampingRatio = 1f, stiffness = 3800f)
+}
+
+object Stats {
+    var blocked by mutableIntStateOf(0)
+}
+
+private fun hex(argb: Int) = String.format("#%06X", argb and 0xFFFFFF)
+
+/** Tela inicial (data: URL) com as cores do tema atual. */
+fun startPageUrl(
+    engine: String,
+    background: Int,
+    onBackground: Int,
+    primary: Int,
+    container: Int,
+    muted: Int,
+): String {
+    val (action, field) =
+        when (engine) {
+            "google" -> "https://www.google.com/search" to "q"
+            "bing" -> "https://www.bing.com/search" to "q"
+            else -> "https://duckduckgo.com/" to "q"
+        }
+    val tiles =
+        listOf(
+            "Notícias" to "https://g1.globo.com/",
+            "Vídeos" to "https://www.youtube.com/",
+            "Mapas" to "https://www.openstreetmap.org/",
+            "Clima" to "https://www.climatempo.com.br/",
+            "Wikipédia" to "https://pt.wikipedia.org/",
+            "E-mail" to "https://mail.proton.me/",
+            "GitHub" to "https://github.com/",
+            "Tradutor" to "https://translate.google.com/",
+        )
+    val tileHtml =
+        tiles.joinToString("") { (name, url) ->
+            "<a class=t href=\"$url\"><b>${name.first()}</b><span>$name</span></a>"
+        }
+    val html =
+        """<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Início</title>
+<style>
+body{margin:0;padding:28px 20px 40px;background:${hex(background)};color:${hex(onBackground)};font-family:sans-serif}
+h1{font-size:30px;margin:8px 0 20px}
+form{margin:0 0 24px}
+input{width:100%;box-sizing:border-box;height:52px;border:0;border-radius:26px;padding:0 20px;font-size:17px;background:${hex(container)};color:${hex(onBackground)}}
+.g{display:flex;flex-wrap:wrap}
+.t{width:25%;box-sizing:border-box;padding:0 4px 18px;text-align:center;text-decoration:none;color:${hex(onBackground)};font-size:12px}
+.t b{display:block;width:56px;height:56px;line-height:56px;margin:0 auto 8px;border-radius:20px;background:${hex(container)};color:${hex(primary)};font-size:22px}
+.s{margin-top:8px;padding:16px;border-radius:24px;background:${hex(container)};font-size:14px;color:${hex(muted)}}
+.s strong{color:${hex(primary)};display:block;font-size:16px;margin-bottom:4px}
+</style></head><body>
+<h1>Início</h1>
+<form action="$action" method="get"><input name="$field" placeholder="Pesquisar na web" autocomplete="off"></form>
+<div class="g">$tileHtml</div>
+<div class="s"><strong>Proteção ativa</strong>Somente HTTPS e bloqueio de rastreadores conhecidos.</div>
+</body></html>"""
+    return "data:text/html;charset=utf-8," + android.net.Uri.encode(html)
 }

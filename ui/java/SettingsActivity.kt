@@ -137,6 +137,29 @@ class SettingsActivity : ComponentActivity() {
                             }
                         }
                         item {
+                            Section("Páginas da web") {
+                                Text("Modo escuro nas páginas", style = MaterialTheme.typography.labelLarge)
+                                val pageDark by rememberStringPref(Prefs.PAGE_DARK, "off")
+                                val opts = listOf("off" to "Desligado", "auto" to "Automático", "force" to "Forçar")
+                                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                    opts.forEachIndexed { index, (id, label) ->
+                                        SegmentedButton(
+                                            selected = pageDark == id,
+                                            onClick = { preferences.edit { putString(Prefs.PAGE_DARK, id) } },
+                                            shape = SegmentedButtonDefaults.itemShape(index = index, count = opts.size),
+                                        ) {
+                                            Text(label)
+                                        }
+                                    }
+                                }
+                                Text(
+                                    "Automático: só sites que já têm tema escuro. Forçar: escurece qualquer site (pode alterar cores e deixar mais lento).",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        item {
                             Section("Busca") {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf("ddg" to "DuckDuckGo", "google" to "Google", "bing" to "Bing")
@@ -162,6 +185,13 @@ class SettingsActivity : ComponentActivity() {
                                     summary = "Endereços http:// são abertos como https://",
                                     preferences = preferences,
                                     key = Prefs.HTTPS_ONLY,
+                                    default = true,
+                                )
+                                SwitchRow(
+                                    title = "Bloquear rastreadores",
+                                    summary = "Anúncios e rastreadores conhecidos · ${Stats.blocked} bloqueados nesta sessão",
+                                    preferences = preferences,
+                                    key = Prefs.BLOCK_TRACKERS,
                                     default = true,
                                 )
                                 TextButton(

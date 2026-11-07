@@ -60,6 +60,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,6 +97,7 @@ class MainActivity : ComponentActivity(), Servo.Client {
     private var currentUrl = ""
     private var currentTitle = ""
     private var alertMessage by mutableStateOf<String?>(null)
+    private var pageFullscreen by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,19 +122,42 @@ class MainActivity : ComponentActivity(), Servo.Client {
                 val engine by rememberStringPref(Prefs.ENGINE, "ddg")
                 val httpsOnly by rememberBoolPref(Prefs.HTTPS_ONLY, true)
                 val experimentalModeEnabled by rememberBoolPref("experimental", false)
+                val blockTrackers by rememberBoolPref(Prefs.BLOCK_TRACKERS, true)
+                val pageDark by rememberStringPref(Prefs.PAGE_DARK, "off")
+                var manualFullscreen by remember { mutableStateOf(false) }
+                val fullscreen = pageFullscreen || manualFullscreen
+                val cs = MaterialTheme.colorScheme
                 val servoFocusRequester = remember { FocusRequester() }
                 val home = remember {
-                    when (engine) {
-                        "google" -> "https://www.google.com/"
-                        "bing" -> "https://www.bing.com/"
-                        else -> "https://duckduckgo.com/"
-                    }
+                    startPageUrl(
+                        engine,
+                        cs.background.toArgb(),
+                        cs.onBackground.toArgb(),
+                        cs.primary.toArgb(),
+                        cs.secondaryContainer.toArgb(),
+                        cs.onSurfaceVariant.toArgb(),
+                    )
+                }
+                val activity = this@MainActivity
+                LaunchedEffect(fullscreen) {
+                    val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    if (fullscreen) controller.hide(WindowInsetsCompat.Type.systemBars())
+                    else controller.show(WindowInsetsCompat.Type.systemBars())
                 }
                 val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     Servo(
                         experimentalModeEnabled = experimentalModeEnabled,
+                        blockTrackers = blockTrackers,
+                        pageDarkMode =
+                            when (pageDark) {
+                                "auto" -> 1
+                                "force" -> 2
+                                else -> 0
+                            },
                         args = intent.getStringExtra("servoargs"),
                         initialUrl =
                             if (Intent.ACTION_VIEW == intent.action) intent.data.toString()
@@ -136,9 +166,11 @@ class MainActivity : ComponentActivity(), Servo.Client {
                         client = this@MainActivity,
                         navigator = navigator,
                         modifier =
-                            Modifier.fillMaxSize()
-                                .windowInsetsPadding(WindowInsets.statusBars)
-                                .padding(bottom = 92.dp + navBottom)
+                            (if (fullscreen) Modifier.fillMaxSize()
+                                else
+                                    Modifier.fillMaxSize()
+                                        .windowInsetsPadding(WindowInsets.statusBars)
+                                        .padding(bottom = 92.dp + navBottom))
                                 .focusRequester(servoFocusRequester),
                     )
                     LaunchedEffect(servoFocusRequester) { servoFocusRequester.requestFocus() }
@@ -152,7 +184,18 @@ class MainActivity : ComponentActivity(), Servo.Client {
                         )
                     }
 
-                    Dock(
+                    if (manualFullscreen && !pageFullscreen) {
+                        FilledTonalIconButton(
+                            onClick = { manualFullscreen = false },
+                            modifier =
+                                Modifier.align(Alignment.BottomEnd).padding(20.dp).size(48.dp).alpha(0.85f),
+                        ) {
+                            Icon(painterResource(R.drawable.cancel), "Sair da tela cheia")
+                        }
+                    }
+                    if (!fullscreen) Dock(
+                        blockedCount = Stats.blocked,
+                        onFullscreen = { manualFullscreen = true },
                         urlState = urlTextFieldState,
                         navigator = navigator,
                         isRefreshing = isRefreshing,
@@ -219,8 +262,17 @@ class MainActivity : ComponentActivity(), Servo.Client {
     }
 
     override fun onUrlChanged(url: String) {
-        urlTextFieldState.edit { replace(0, length, url) }
-        currentUrl = url
+        val shown = if (url.startsWith("data:")) "" else url
+        urlTextFieldState.edit { replace(0, length, shown) }
+        currentUrl = shown
+    }
+
+    override fun onFullscreenChanged(enabled: Boolean) {
+        pageFullscreen = enabled
+    }
+
+    override fun onBlockedCountChanged(count: Int) {
+        Stats.blocked = count
     }
 
     companion object {
@@ -246,6 +298,8 @@ private fun Modifier.pressScale(source: MutableInteractionSource): Modifier {
 
 @Composable
 private fun Dock(
+    blockedCount: Int,
+    onFullscreen: () -> Unit,
     urlState: TextFieldState,
     navigator: ServoNavigator,
     isRefreshing: Boolean,
@@ -368,6 +422,20 @@ private fun Dock(
                         Icon(painterResource(R.drawable.more), stringResource(R.string.options))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("$blockedCount rastreadores bloqueados") },
+                            leadingIcon = { Icon(painterResource(R.drawable.lock), null) },
+                            enabled = false,
+                            onClick = {},
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Tela cheia") },
+                            leadingIcon = { Icon(painterResource(R.drawable.refresh), null) },
+                            onClick = {
+                                menuOpen = false
+                                onFullscreen()
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.history_forward)) },
                             leadingIcon = {
