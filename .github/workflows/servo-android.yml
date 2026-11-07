@@ -5,11 +5,12 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/servo-android.yml"
+      - "ui/**"
   workflow_dispatch:
     inputs:
       servo_ref:
-        description: "Versão do Servo (branch ou tag)"
-        default: "main"
+        description: "Versão do Servo (commit, branch ou tag)"
+        default: "e7d4eceb24f57451e4e25d48e273294a540951c1"
       ndk_version:
         description: "Versão do NDK do Android"
         default: "29.0.14206865"
@@ -23,7 +24,7 @@ jobs:
     timeout-minutes: 360
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      SERVO_REF: ${{ inputs.servo_ref || 'main' }}
+      SERVO_REF: ${{ inputs.servo_ref || 'e7d4eceb24f57451e4e25d48e273294a540951c1' }}
       NDK_VERSION: ${{ inputs.ndk_version || '29.0.14206865' }}
       CARGO_INCREMENTAL: "0"
     steps:
@@ -47,7 +48,35 @@ jobs:
       - name: Baixar o código do Servo
         run: |
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
-          git clone --depth 1 --branch "$SERVO_REF" https://github.com/servo/servo.git servo
+          git init servo
+          cd servo
+          git remote add origin https://github.com/servo/servo.git
+          git fetch --depth 1 origin "$SERVO_REF"
+          git checkout -q FETCH_HEAD
+          git log -1 --format='%H %cI'
+
+      - name: Restaurar cache da compilação
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            servo/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: servo-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}-v1
+          restore-keys: |
+            servo-
+
+      - name: Aplicar a nossa interface
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
+          # Deixa o código-fonte "antigo" para o cargo reaproveitar o cache
+          find servo -path servo/target -prune -o -path servo/.git -prune -o -type f -exec touch -d '2020-01-01' {} +
+          APP=servo/support/android/apk/servoapp/src/main
+          cp ui/java/*.kt "$APP/java/org/servo/servoshell/"
+          cp ui/res/values/*.xml "$APP/res/values/"
+          cp ui/res/drawable/*.xml "$APP/res/drawable/"
+          ls "$APP/java/org/servo/servoshell/"
 
       - name: Instalar SDK e NDK do Android
         run: |
@@ -89,6 +118,16 @@ jobs:
         run: |
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           ./mach build --release --android
+
+      - name: Salvar cache da compilação
+        if: ${{ always() && steps.cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            servo/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: servo-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}-v1
 
       - name: Reunir e assinar os APKs
         run: |

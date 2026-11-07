@@ -1,0 +1,19 @@
+<resources>
+  <string name="app_name">Navegador</string>
+  <string name="back">Voltar</string>
+  <string name="history_back">Voltar</string>
+  <string name="history_forward">Avançar</string>
+  <string name="options">Configurações</string>
+  <string name="url_or_search">Pesquisar ou digitar endereço</string>
+  <string name="refresh">Atualizar</string>
+  <string name="cancel">Parar</string>
+
+  <string name="settings_title">Configurações</string>
+  <string name="settings_experimental_title">Recursos experimentais</string>
+  <string name="settings_experimental_summary">Ativa recursos novos da web (podem ser instáveis)</string>
+
+  <string name="history_title">Histórico</string>
+  <string name="history_placeholder_title">Histórico</string>
+  <string name="history_placeholder_message">Seu histórico está vazio</string>
+  <string name="clear_history">Apagar histórico</string>
+</resources>
