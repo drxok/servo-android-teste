@@ -28,6 +28,9 @@ jobs:
       NDK_VERSION: ${{ inputs.ndk_version || '29.0.14206865' }}
       CARGO_INCREMENTAL: "0"
     steps:
+      - name: Baixar este repositório
+        uses: actions/checkout@v4
+
       - name: Liberar espaço em disco
         run: |
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
@@ -63,9 +66,9 @@ jobs:
             servo/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: servo-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}-v1
+          key: servo-v2-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}
           restore-keys: |
-            servo-
+            servo-v2-
 
       - name: Aplicar a nossa interface
         run: |
@@ -119,15 +122,23 @@ jobs:
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
           ./mach build --release --android
 
+      - name: Medir cache
+        id: size
+        if: always()
+        run: |
+          s=$(du -sm servo/target 2>/dev/null | cut -f1)
+          echo "mb=${s:-0}" >> "$GITHUB_OUTPUT"
+          echo "target: ${s:-0} MB"
+
       - name: Salvar cache da compilação
-        if: ${{ always() && steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && steps.cache.outputs.cache-hit != 'true' && fromJSON(steps.size.outputs.mb) > 3000 }}
         uses: actions/cache/save@v4
         with:
           path: |
             servo/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: servo-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}-v1
+          key: servo-v2-${{ env.SERVO_REF }}-${{ env.NDK_VERSION }}
 
       - name: Reunir e assinar os APKs
         run: |
