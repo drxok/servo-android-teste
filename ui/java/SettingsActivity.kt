@@ -216,7 +216,7 @@ private fun Swatch(color: Color, label: String, selected: Boolean, onClick: () -
     val scale by
         animateFloatAsState(
             targetValue = if (selected) 1.14f else 1f,
-            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+            animationSpec = Motion.spatial(),
             label = "swatch",
         )
     Box(

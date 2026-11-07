@@ -235,7 +235,7 @@ private fun Modifier.pressScale(source: MutableInteractionSource): Modifier {
     val scale by
         animateFloatAsState(
             targetValue = if (pressed) 0.88f else 1f,
-            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+            animationSpec = Motion.fastSpatial(),
             label = "press",
         )
     return this.graphicsLayer {
@@ -258,9 +258,8 @@ private fun Dock(
     var menuOpen by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val motion = MaterialTheme.motionScheme
-    val enter = fadeIn(motion.defaultEffectsSpec()) + expandHorizontally(motion.defaultSpatialSpec<IntSize>())
-    val exit = fadeOut(motion.fastEffectsSpec()) + shrinkHorizontally(motion.fastSpatialSpec<IntSize>())
+    val enter = fadeIn(Motion.effects()) + expandHorizontally(Motion.spatial<IntSize>())
+    val exit = fadeOut(Motion.fastEffects()) + shrinkHorizontally(Motion.fastSpatial<IntSize>())
 
     Surface(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth().height(68.dp),

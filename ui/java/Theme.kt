@@ -5,9 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialExpressiveTheme
-import androidx.compose.material3.MotionScheme
+import androidx.compose.animation.core.spring
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -84,7 +83,6 @@ fun rememberBoolPref(key: String, default: Boolean): State<Boolean> {
     return state
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BrowserTheme(content: @Composable () -> Unit) {
     val mode by rememberStringPref(Prefs.THEME, "system")
@@ -158,11 +156,7 @@ fun BrowserTheme(content: @Composable () -> Unit) {
         )
     }
 
-    MaterialExpressiveTheme(
-        colorScheme = scheme,
-        motionScheme = MotionScheme.expressive(),
-        content = content,
-    )
+    MaterialTheme(colorScheme = scheme, content = content)
 }
 
 /** Turns what the user typed into an address (or a search) and applies HTTPS-only. */
@@ -182,4 +176,15 @@ fun resolveInput(raw: String, engine: String, httpsOnly: Boolean): String {
         "bing" -> "https://www.bing.com/search?q=$q"
         else -> "https://duckduckgo.com/?q=$q"
     }
+}
+
+/** Molas no estilo Material 3 Expressive (valores do esquema "expressive"). */
+object Motion {
+    fun <T> spatial() = spring<T>(dampingRatio = 0.8f, stiffness = 380f)
+
+    fun <T> fastSpatial() = spring<T>(dampingRatio = 0.6f, stiffness = 800f)
+
+    fun <T> effects() = spring<T>(dampingRatio = 1f, stiffness = 1600f)
+
+    fun <T> fastEffects() = spring<T>(dampingRatio = 1f, stiffness = 3800f)
 }
