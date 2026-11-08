@@ -151,7 +151,22 @@ edit(
             "                        outAttrs.imeOptions =\n"
             "                            android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN or\n"
             "                                android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI\n"
-            "                        BaseInputConnection(view, false)\n"
+            "                        object : BaseInputConnection(view, false) {\n"
+            "                            private fun press(code: Int, times: Int) {\n"
+            "                                repeat(times) {\n"
+            "                                    sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, code))\n"
+            "                                    sendKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, code))\n"
+            "                                }\n"
+            "                            }\n\n"
+            "                            override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {\n"
+            "                                press(android.view.KeyEvent.KEYCODE_DEL, beforeLength)\n"
+            "                                press(android.view.KeyEvent.KEYCODE_FORWARD_DEL, afterLength)\n"
+            "                                return true\n"
+            "                            }\n\n"
+            "                            override fun deleteSurroundingTextInCodePoints(beforeLength: Int, afterLength: Int): Boolean {\n"
+            "                                return deleteSurroundingText(beforeLength, afterLength)\n"
+            "                            }\n"
+            "                        }\n"
             "                    }",
         )
     ],

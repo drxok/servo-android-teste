@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity(), Servo.Client {
                                 else
                                     Modifier.fillMaxSize()
                                         .windowInsetsPadding(WindowInsets.statusBars)
-                                        .padding(bottom = 92.dp + navBottom))
+                                        .padding(bottom = 88.dp + navBottom))
                                 .focusRequester(servoFocusRequester),
                     )
                     LaunchedEffect(servoFocusRequester) { servoFocusRequester.requestFocus() }
@@ -316,14 +316,14 @@ private fun Dock(
     val exit = fadeOut(Motion.fastEffects()) + shrinkHorizontally(Motion.fastSpatial<IntSize>())
 
     Surface(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth().height(68.dp),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth().height(64.dp),
         shape = RoundedCornerShape(34.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shadowElevation = 6.dp,
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -333,14 +333,14 @@ private fun Dock(
                     onClick = { navigator.back() },
                     enabled = navigator.canGoBack,
                     interactionSource = src,
-                    modifier = Modifier.size(48.dp).pressScale(src),
+                    modifier = Modifier.size(44.dp).pressScale(src),
                 ) {
-                    Icon(painterResource(R.drawable.arrow_back), stringResource(R.string.history_back))
+                    Icon(painterResource(R.drawable.arrow_back), stringResource(R.string.history_back), modifier = Modifier.size(20.dp))
                 }
             }
 
             Surface(
-                modifier = Modifier.weight(1f).height(48.dp),
+                modifier = Modifier.weight(1f).height(44.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
@@ -355,7 +355,7 @@ private fun Dock(
                             painterResource(R.drawable.lock),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(15.dp),
                         )
                     }
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
@@ -401,12 +401,12 @@ private fun Dock(
                 FilledTonalIconButton(
                     onClick = { if (isRefreshing) navigator.stop() else navigator.reload() },
                     interactionSource = src,
-                    modifier = Modifier.size(48.dp).pressScale(src),
+                    modifier = Modifier.size(44.dp).pressScale(src),
                 ) {
                     if (isRefreshing) {
-                        Icon(painterResource(R.drawable.cancel), stringResource(R.string.cancel))
+                        Icon(painterResource(R.drawable.cancel), stringResource(R.string.cancel), modifier = Modifier.size(20.dp))
                     } else {
-                        Icon(painterResource(R.drawable.refresh), stringResource(R.string.refresh))
+                        Icon(painterResource(R.drawable.refresh), stringResource(R.string.refresh), modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -417,20 +417,20 @@ private fun Dock(
                     FilledIconButton(
                         onClick = { menuOpen = true },
                         interactionSource = src,
-                        modifier = Modifier.size(48.dp).pressScale(src),
+                        modifier = Modifier.size(44.dp).pressScale(src),
                     ) {
-                        Icon(painterResource(R.drawable.more), stringResource(R.string.options))
+                        Icon(painterResource(R.drawable.more), stringResource(R.string.options), modifier = Modifier.size(20.dp))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
                             text = { Text("$blockedCount rastreadores bloqueados") },
-                            leadingIcon = { Icon(painterResource(R.drawable.lock), null) },
+                            leadingIcon = { Icon(painterResource(R.drawable.lock), null, modifier = Modifier.size(20.dp)) },
                             enabled = false,
                             onClick = {},
                         )
                         DropdownMenuItem(
                             text = { Text("Tela cheia") },
-                            leadingIcon = { Icon(painterResource(R.drawable.refresh), null) },
+                            leadingIcon = { Icon(painterResource(R.drawable.refresh), null, modifier = Modifier.size(20.dp)) },
                             onClick = {
                                 menuOpen = false
                                 onFullscreen()
@@ -439,7 +439,7 @@ private fun Dock(
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.history_forward)) },
                             leadingIcon = {
-                                Icon(painterResource(R.drawable.arrow_forward), null)
+                                Icon(painterResource(R.drawable.arrow_forward), null, modifier = Modifier.size(20.dp))
                             },
                             enabled = navigator.canGoForward,
                             onClick = {
@@ -449,7 +449,7 @@ private fun Dock(
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.history_title)) },
-                            leadingIcon = { Icon(painterResource(R.drawable.history), null) },
+                            leadingIcon = { Icon(painterResource(R.drawable.history), null, modifier = Modifier.size(20.dp)) },
                             onClick = {
                                 menuOpen = false
                                 onHistory()
@@ -457,7 +457,7 @@ private fun Dock(
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.options)) },
-                            leadingIcon = { Icon(painterResource(R.drawable.settings), null) },
+                            leadingIcon = { Icon(painterResource(R.drawable.settings), null, modifier = Modifier.size(20.dp)) },
                             onClick = {
                                 menuOpen = false
                                 onSettings()
