@@ -28,6 +28,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -87,6 +89,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.servo.servoview.Servo
@@ -319,6 +322,7 @@ private fun Dock(
 ) {
     var focused by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+    var dockHeight by remember { mutableIntStateOf(0) }
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val enter = fadeIn(Motion.effects()) + expandHorizontally(Motion.spatial<IntSize>())
@@ -331,6 +335,7 @@ private fun Dock(
         shadowElevation = 0.dp,
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
+      Box(Modifier.onSizeChanged { dockHeight = it.height }) {
         Row(
             modifier =
                 Modifier.navigationBarsPadding().padding(horizontal = 10.dp, vertical = 6.dp).height(40.dp),
@@ -431,7 +436,23 @@ private fun Dock(
                     ) {
                         Icon(painterResource(R.drawable.more), stringResource(R.string.options), modifier = Modifier.size(20.dp))
                     }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                }
+            }
+        }
+        if (menuOpen) {
+            androidx.compose.ui.window.Popup(
+                alignment = Alignment.BottomEnd,
+                offset = androidx.compose.ui.unit.IntOffset(0, -dockHeight),
+                onDismissRequest = { menuOpen = false },
+                properties = androidx.compose.ui.window.PopupProperties(focusable = true),
+            ) {
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.width(260.dp),
+                ) {
+                    Column(Modifier.padding(vertical = 6.dp)) {
                         DropdownMenuItem(
                             text = { Text("$blockedCount rastreadores bloqueados") },
                             leadingIcon = { Icon(painterResource(R.drawable.lock), null, modifier = Modifier.size(20.dp)) },
@@ -477,5 +498,6 @@ private fun Dock(
                 }
             }
         }
+      }
     }
 }

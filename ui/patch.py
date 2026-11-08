@@ -171,4 +171,14 @@ edit(
         )
     ],
 )
+edit(
+    "ports/servoshell/egl/android/mod.rs",
+    [
+        (
+            "    char::from_u32(unicode)\n        .filter(|c| *c != '\\0')\n        .map(|c| Key::Character(String::from(c)))\n        .or_else(|| KeyCode::try_from(keycode).ok().map(Key::from))\n",
+            "    if let Ok(named) = KeyCode::try_from(keycode) {\n        return Some(Key::from(named));\n    }\n"
+            "    char::from_u32(unicode)\n        .filter(|c| *c != '\\0')\n        .map(|c| Key::Character(String::from(c)))\n",
+        )
+    ],
+)
 print("patch ok")
