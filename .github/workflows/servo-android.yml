@@ -116,7 +116,7 @@ jobs:
         working-directory: servo
         run: |
           exec > >(tee -a "$RUNNER_TEMP/full.log") 2>&1
-          ./mach bootstrap --force
+          ./mach bootstrap --force --skip-nextest
 
       - name: Compilar para Android
         working-directory: servo
