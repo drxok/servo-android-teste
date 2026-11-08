@@ -324,4 +324,9 @@ edit(
          "        override fun onTabsChanged(count: Int, active: Int) {\n            scope.launch { client.onTabsChanged(count, active) }\n        }\n\n"),
     ],
 )
+edit(
+    "support/android/apk/servoapp/src/main/AndroidManifest.xml",
+    [('<activity android:name=".MainActivity"',
+      '<activity android:name=".MainActivity"\n            android:windowSoftInputMode="adjustNothing"')],
+)
 print("patch ok")
