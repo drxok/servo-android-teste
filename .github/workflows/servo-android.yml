@@ -90,6 +90,7 @@ jobs:
           cp ui/java/*.kt "$APP/java/org/servo/servoshell/"
           cp ui/res/values/*.xml "$APP/res/values/"
           cp ui/res/drawable/*.xml "$APP/res/drawable/"
+          mkdir -p "$APP/res/mipmap-anydpi-v26" && cp ui/res/mipmap-anydpi-v26/*.xml "$APP/res/mipmap-anydpi-v26/"
           ls "$APP/java/org/servo/servoshell/"
 
       - name: Instalar SDK e NDK do Android

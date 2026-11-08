@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">Navegador</string>
+  <string name="app_name">Xok Browser</string>
   <string name="back">Voltar</string>
   <string name="history_back">Voltar</string>
   <string name="history_forward">Avançar</string>
