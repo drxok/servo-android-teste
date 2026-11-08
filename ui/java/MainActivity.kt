@@ -35,6 +35,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -170,11 +172,19 @@ class MainActivity : ComponentActivity(), Servo.Client {
                                 else
                                     Modifier.fillMaxSize()
                                         .windowInsetsPadding(WindowInsets.statusBars)
-                                        .padding(bottom = 88.dp + navBottom))
+                                        .padding(bottom = 52.dp + navBottom))
                                 .focusRequester(servoFocusRequester),
                     )
                     LaunchedEffect(servoFocusRequester) { servoFocusRequester.requestFocus() }
 
+                    if (!fullscreen) {
+                        Spacer(
+                            Modifier.fillMaxWidth()
+                                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                                .background(cs.surface)
+                                .align(Alignment.TopCenter)
+                        )
+                    }
                     if (isRefreshing) {
                         LinearProgressIndicator(
                             modifier =
@@ -212,7 +222,6 @@ class MainActivity : ComponentActivity(), Servo.Client {
                         },
                         modifier =
                             Modifier.align(Alignment.BottomCenter)
-                                .windowInsetsPadding(WindowInsets.navigationBars)
                                 .imePadding(),
                     )
 
@@ -316,14 +325,15 @@ private fun Dock(
     val exit = fadeOut(Motion.fastEffects()) + shrinkHorizontally(Motion.fastSpatial<IntSize>())
 
     Surface(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth().height(64.dp),
-        shape = RoundedCornerShape(34.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = androidx.compose.ui.graphics.RectangleShape,
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 6.dp,
+        shadowElevation = 0.dp,
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
-            modifier = Modifier.padding(8.dp),
+            modifier =
+                Modifier.navigationBarsPadding().padding(horizontal = 10.dp, vertical = 6.dp).height(40.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -333,14 +343,14 @@ private fun Dock(
                     onClick = { navigator.back() },
                     enabled = navigator.canGoBack,
                     interactionSource = src,
-                    modifier = Modifier.size(44.dp).pressScale(src),
+                    modifier = Modifier.size(40.dp).pressScale(src),
                 ) {
                     Icon(painterResource(R.drawable.arrow_back), stringResource(R.string.history_back), modifier = Modifier.size(20.dp))
                 }
             }
 
             Surface(
-                modifier = Modifier.weight(1f).height(44.dp),
+                modifier = Modifier.weight(1f).height(40.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
@@ -401,7 +411,7 @@ private fun Dock(
                 FilledTonalIconButton(
                     onClick = { if (isRefreshing) navigator.stop() else navigator.reload() },
                     interactionSource = src,
-                    modifier = Modifier.size(44.dp).pressScale(src),
+                    modifier = Modifier.size(40.dp).pressScale(src),
                 ) {
                     if (isRefreshing) {
                         Icon(painterResource(R.drawable.cancel), stringResource(R.string.cancel), modifier = Modifier.size(20.dp))
@@ -417,7 +427,7 @@ private fun Dock(
                     FilledIconButton(
                         onClick = { menuOpen = true },
                         interactionSource = src,
-                        modifier = Modifier.size(44.dp).pressScale(src),
+                        modifier = Modifier.size(40.dp).pressScale(src),
                     ) {
                         Icon(painterResource(R.drawable.more), stringResource(R.string.options), modifier = Modifier.size(20.dp))
                     }
