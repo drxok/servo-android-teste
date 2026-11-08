@@ -192,4 +192,136 @@ edit(
         )
     ],
 )
+
+# ======================= ABAS =======================
+edit(
+    "ports/servoshell/egl/host_trait.rs",
+    [("    fn on_blocked_count_changed(&self, _count: u32) {}\n",
+      "    fn on_blocked_count_changed(&self, _count: u32) {}\n"
+      "    /// A quantidade de abas ou a aba ativa mudou.\n"
+      "    fn on_tabs_changed(&self, _count: u32, _active: u32) {}\n")],
+)
+edit(
+    "ports/servoshell/window.rs",
+    [
+        ("    #[cfg_attr(any(target_os = \"android\", target_env = \"ohos\"), expect(dead_code))]\n    pub(crate) fn activate_webview_by_index",
+         "    pub(crate) fn activate_webview_by_index"),
+        ("    #[cfg_attr(any(target_os = \"android\", target_env = \"ohos\"), expect(dead_code))]\n    pub(crate) fn get_active_webview_index",
+         "    pub(crate) fn get_active_webview_index"),
+    ],
+)
+edit(
+    "ports/servoshell/egl/app.rs",
+    [
+        ("    current_load_status: Cell<Option<LoadStatus>>,\n",
+         "    current_load_status: Cell<Option<LoadStatus>>,\n    current_tabs: Cell<(u32, u32)>,\n"),
+        ("            current_load_status: Default::default(),\n",
+         "            current_load_status: Default::default(),\n            current_tabs: Default::default(),\n"),
+        ("        let new_title = active_webview.page_title();\n",
+         "        let tabs_now = (\n            window.webview_ids().len() as u32,\n            window.get_active_webview_index().unwrap_or(0) as u32,\n        );\n"
+         "        if tabs_now != self.current_tabs.get() {\n            self.current_tabs.set(tabs_now);\n            self.host.on_tabs_changed(tabs_now.0, tabs_now.1);\n        }\n\n"
+         "        let new_title = active_webview.page_title();\n"),
+        ("    /// The active webview will be immediately valid via `active_or_newest_webview()`\n",
+         "    /// Abre uma aba nova (e a ativa).\n"
+         "    pub fn new_tab(&self, location: &str) {\n"
+         "        let url = Url::parse(location).unwrap_or_else(|_| Url::parse(\"about:blank\").unwrap());\n"
+         "        self.window().create_and_activate_toplevel_webview(\n"
+         "            self.state.clone(),\n            TopLevelWebViewCreationRequest::WithUrl(url),\n        );\n"
+         "        self.spin_event_loop();\n    }\n\n"
+         "    /// Troca para a aba de índice `index`.\n"
+         "    pub fn switch_tab(&self, index: usize) {\n"
+         "        self.window().activate_webview_by_index(index);\n        self.spin_event_loop();\n    }\n\n"
+         "    /// Fecha a aba de índice `index` (nunca fecha a última).\n"
+         "    pub fn close_tab(&self, index: usize) {\n"
+         "        let window = self.window();\n        let ids = window.webview_ids();\n"
+         "        if ids.len() > 1 {\n            if let Some(id) = ids.get(index) {\n                window.close_webview(*id);\n            }\n        }\n"
+         "        self.spin_event_loop();\n    }\n\n"
+         "    /// The active webview will be immediately valid via `active_or_newest_webview()`\n"),
+    ],
+)
+edit(
+    "ports/servoshell/egl/android/mod.rs",
+    [
+        ("#[unsafe(no_mangle)]\npub extern \"C\" fn Java_org_servo_servoview_JNIServo_setBlockTrackers<'local>(\n",
+         "#[unsafe(no_mangle)]\n"
+         "pub extern \"C\" fn Java_org_servo_servoview_JNIServo_newTab<'local>(\n"
+         "    mut env: EnvUnowned<'local>,\n    _class: JClass<'local>,\n    url: JString<'local>,\n) {\n"
+         "    env.with_env(|env| -> jni::errors::Result<_> {\n"
+         "        call(env, |s| s.new_tab(&url.to_string()));\n        Ok(())\n    })\n"
+         "    .resolve::<ThrowRuntimeExAndDefault>()\n}\n\n"
+         "#[unsafe(no_mangle)]\n"
+         "pub extern \"C\" fn Java_org_servo_servoview_JNIServo_switchTab<'local>(\n"
+         "    mut env: EnvUnowned<'local>,\n    _class: JClass<'local>,\n    index: jint,\n) {\n"
+         "    env.with_env(|env| -> jni::errors::Result<_> {\n"
+         "        call(env, |s| s.switch_tab(index.max(0) as usize));\n        Ok(())\n    })\n"
+         "    .resolve::<ThrowRuntimeExAndDefault>()\n}\n\n"
+         "#[unsafe(no_mangle)]\n"
+         "pub extern \"C\" fn Java_org_servo_servoview_JNIServo_closeTab<'local>(\n"
+         "    mut env: EnvUnowned<'local>,\n    _class: JClass<'local>,\n    index: jint,\n) {\n"
+         "    env.with_env(|env| -> jni::errors::Result<_> {\n"
+         "        call(env, |s| s.close_tab(index.max(0) as usize));\n        Ok(())\n    })\n"
+         "    .resolve::<ThrowRuntimeExAndDefault>()\n}\n\n"
+         "#[unsafe(no_mangle)]\npub extern \"C\" fn Java_org_servo_servoview_JNIServo_setBlockTrackers<'local>(\n"),
+        ("    fn on_blocked_count_changed(&self, count: u32) {\n",
+         "    fn on_tabs_changed(&self, count: u32, active: u32) {\n"
+         "        self.jvm\n            .attach_current_thread(|env| -> Result<(), Error> {\n"
+         "                env.call_method(\n                    callback_ref(),\n"
+         "                    jni_str!(\"onTabsChanged\"),\n"
+         "                    jni_sig!(\"(II)V\"),\n"
+         "                    &[JValue::Int(count as jint), JValue::Int(active as jint)],\n                )?;\n"
+         "                Ok(())\n            })\n            .unwrap();\n    }\n\n"
+         "    fn on_blocked_count_changed(&self, count: u32) {\n"),
+    ],
+)
+base2 = "support/android/apk/servoview/src/main/java/org/servo/servoview"
+edit(
+    f"{base2}/JNIServo.kt",
+    [
+        ("    external fun setPageDarkMode(mode: Int)\n",
+         "    external fun setPageDarkMode(mode: Int)\n\n    external fun newTab(url: String)\n\n"
+         "    external fun switchTab(index: Int)\n\n    external fun closeTab(index: Int)\n"),
+        ("        fun onBlockedCountChanged(count: Int)\n    }\n}",
+         "        fun onBlockedCountChanged(count: Int)\n\n        fun onTabsChanged(count: Int, active: Int)\n    }\n}"),
+    ],
+)
+edit(
+    f"{base2}/Servo.kt",
+    [
+        ("    pageDarkMode: Int = 0,\n    args: String?,",
+         "    pageDarkMode: Int = 0,\n    restoreUrls: List<String>? = null,\n    restoreActive: Int = 0,\n    args: String?,"),
+        ("        var paused = false\n",
+         "        var paused = false\n        var restoreDone = false\n"),
+        ("                    resources.displayMetrics.density,\n                    surface,\n                )\n            } else {",
+         "                    resources.displayMetrics.density,\n                    surface,\n                )\n"
+         "                if (!restoreDone) {\n                    restoreDone = true\n"
+         "                    if (restoreUrls != null) servo.restoreTabs(restoreUrls, restoreActive)\n                }\n            } else {"),
+        ("        data object Stop : NavigationEvent\n    }",
+         "        data object Stop : NavigationEvent\n\n        data class NewTab(val uri: String) : NavigationEvent\n\n"
+         "        data class SwitchTab(val index: Int) : NavigationEvent\n\n        data class CloseTab(val index: Int) : NavigationEvent\n    }"),
+        ("                NavigationEvent.Stop -> servo.stop()\n",
+         "                NavigationEvent.Stop -> servo.stop()\n"
+         "                is NavigationEvent.NewTab -> servo.newTab(navigationEvent.uri)\n"
+         "                is NavigationEvent.SwitchTab -> servo.switchTab(navigationEvent.index)\n"
+         "                is NavigationEvent.CloseTab -> servo.closeTab(navigationEvent.index)\n"),
+        ("    fun stop() {\n        coroutineScope.launch { navigationEvents.emit(NavigationEvent.Stop) }\n    }\n",
+         "    fun stop() {\n        coroutineScope.launch { navigationEvents.emit(NavigationEvent.Stop) }\n    }\n\n"
+         "    fun newTab(uri: String) {\n        coroutineScope.launch { navigationEvents.emit(NavigationEvent.NewTab(uri)) }\n    }\n\n"
+         "    fun switchTab(index: Int) {\n        coroutineScope.launch { navigationEvents.emit(NavigationEvent.SwitchTab(index)) }\n    }\n\n"
+         "    fun closeTab(index: Int) {\n        coroutineScope.launch { navigationEvents.emit(NavigationEvent.CloseTab(index)) }\n    }\n"),
+        ("    fun loadUri(uri: String) {\n        scope.launch(glDispatcher) { jni.loadUri(uri) }\n    }\n",
+         "    fun loadUri(uri: String) {\n        scope.launch(glDispatcher) { jni.loadUri(uri) }\n    }\n\n"
+         "    fun newTab(uri: String) {\n        scope.launch(glDispatcher) { jni.newTab(uri) }\n    }\n\n"
+         "    fun switchTab(index: Int) {\n        scope.launch(glDispatcher) { jni.switchTab(index) }\n    }\n\n"
+         "    fun closeTab(index: Int) {\n        scope.launch(glDispatcher) { jni.closeTab(index) }\n    }\n\n"
+         "    internal fun restoreTabs(urls: List<String>, active: Int) {\n"
+         "        scope.launch(glDispatcher) {\n"
+         "            for (i in 1 until urls.size) jni.newTab(if (i == active) urls[i] else \"about:blank\")\n"
+         "            jni.switchTab(active)\n        }\n    }\n"),
+        ("        fun onBlockedCountChanged(count: Int) {}\n    }\n\n    private class Callbacks(",
+         "        fun onBlockedCountChanged(count: Int) {}\n\n        fun onTabsChanged(count: Int, active: Int) {}\n    }\n\n    private class Callbacks("),
+        ("        override fun onBlockedCountChanged(count: Int) {\n            scope.launch { client.onBlockedCountChanged(count) }\n        }\n\n",
+         "        override fun onBlockedCountChanged(count: Int) {\n            scope.launch { client.onBlockedCountChanged(count) }\n        }\n\n"
+         "        override fun onTabsChanged(count: Int, active: Int) {\n            scope.launch { client.onTabsChanged(count, active) }\n        }\n\n"),
+    ],
+)
 print("patch ok")

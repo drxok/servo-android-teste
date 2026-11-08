@@ -1,6 +1,6 @@
 /* Bloqueio de rastreadores e modo escuro das páginas (parte do nosso navegador). */
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU32, Ordering};
 
@@ -17,6 +17,7 @@ static DARK_MODE: AtomicI32 = AtomicI32::new(0);
 static APPLIED_DARK_MODE: AtomicI32 = AtomicI32::new(0);
 
 thread_local! {
+    static LAST_THEMED: Cell<Option<servo::WebViewId>> = const { Cell::new(None) };
     static FORCE_SHEET: RefCell<Option<Rc<UserStyleSheet>>> = const { RefCell::new(None) };
 }
 
@@ -45,7 +46,12 @@ pub fn take_blocked_change() -> Option<u32> {
 /// Aplica o modo escuro das páginas se o pedido mudou.
 pub fn apply_dark_mode(webview: &WebView, manager: &UserContentManager) {
     let wanted = DARK_MODE.load(Ordering::Relaxed);
+    let id = webview.id();
+    let new_view = LAST_THEMED.with(|c| c.replace(Some(id)) != Some(id));
     if APPLIED_DARK_MODE.swap(wanted, Ordering::Relaxed) == wanted {
+        if new_view {
+            webview.notify_theme_change(if wanted >= 1 { Theme::Dark } else { Theme::Light });
+        }
         return;
     }
     webview.notify_theme_change(if wanted >= 1 { Theme::Dark } else { Theme::Light });

@@ -27,6 +27,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
@@ -103,11 +105,19 @@ class MainActivity : ComponentActivity(), Servo.Client {
     private var currentTitle = ""
     private var alertMessage by mutableStateOf<String?>(null)
     private var pageFullscreen by mutableStateOf(false)
+    private var showTabs by mutableStateOf(false)
+    private var tabActions: TabActions? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val navigator = ServoNavigator()
+        Tabs.load(this)
+        if (Intent.ACTION_VIEW == intent.action && intent.data != null) {
+            Tabs.list.add(Tab(Tabs.newId(), intent.data.toString(), ""))
+            Tabs.active = Tabs.list.size - 1
+            Tabs.markPending()
+        }
         historyManager = HistoryManager(this)
 
         val historyActivityResultLauncher =
@@ -144,6 +154,10 @@ class MainActivity : ComponentActivity(), Servo.Client {
                     )
                 }
                 val activity = this@MainActivity
+                val restoreUrls = remember { Tabs.list.map { if (it.url.isEmpty()) home else it.url } }
+                val restoreActive = remember { Tabs.active }
+                val actions = remember { TabActions(activity, navigator, home).also { tabActions = it } }
+                BackHandler(enabled = showTabs) { showTabs = false }
                 LaunchedEffect(fullscreen) {
                     val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
                     controller.systemBarsBehavior =
@@ -164,9 +178,9 @@ class MainActivity : ComponentActivity(), Servo.Client {
                                 else -> 0
                             },
                         args = intent.getStringExtra("servoargs"),
-                        initialUrl =
-                            if (Intent.ACTION_VIEW == intent.action) intent.data.toString()
-                            else home,
+                        initialUrl = if (restoreActive == 0) restoreUrls[0] else "about:blank",
+                        restoreUrls = restoreUrls,
+                        restoreActive = restoreActive,
                         logStr = intent.getStringExtra("servolog"),
                         client = this@MainActivity,
                         navigator = navigator,
@@ -209,6 +223,8 @@ class MainActivity : ComponentActivity(), Servo.Client {
                     if (!fullscreen) Dock(
                         blockedCount = Stats.blocked,
                         onFullscreen = { manualFullscreen = true },
+                        tabCount = Tabs.list.size,
+                        onTabs = { showTabs = true },
                         urlState = urlTextFieldState,
                         navigator = navigator,
                         isRefreshing = isRefreshing,
@@ -227,6 +243,25 @@ class MainActivity : ComponentActivity(), Servo.Client {
                             Modifier.align(Alignment.BottomCenter)
                                 .imePadding(),
                     )
+
+                    if (showTabs) {
+                        TabsScreen(
+                            tabs = Tabs.list,
+                            active = Tabs.active,
+                            onSelect = { i ->
+                                actions.switchTo(i)
+                                showTabs = false
+                                servoFocusRequester.requestFocus()
+                            },
+                            onClose = { i -> actions.close(i) },
+                            onNew = {
+                                actions.newTab()
+                                showTabs = false
+                                servoFocusRequester.requestFocus()
+                            },
+                            onDone = { showTabs = false },
+                        )
+                    }
 
                     alertMessage?.let { message ->
                         AlertDialog(
@@ -271,12 +306,32 @@ class MainActivity : ComponentActivity(), Servo.Client {
 
     override fun onTitleChanged(title: String) {
         currentTitle = title
+        Tabs.update(Tabs.active) { if (it.pending) it else it.copy(title = title) }
+        Tabs.save(this)
     }
 
     override fun onUrlChanged(url: String) {
         val shown = if (url.startsWith("data:")) "" else url
         urlTextFieldState.edit { replace(0, length, shown) }
         currentUrl = shown
+        if (url != "about:blank") {
+            Tabs.update(Tabs.active) { if (it.pending) it else it.copy(url = shown) }
+            Tabs.save(this)
+        }
+    }
+
+    override fun onTabsChanged(count: Int, active: Int) {
+        // Abas criadas ou fechadas pela própria página (ex.: links que abrem em nova aba).
+        if (count > Tabs.list.size) {
+            while (Tabs.list.size < count) Tabs.list.add(Tab(Tabs.newId(), "", ""))
+            Tabs.active = active.coerceIn(0, Tabs.list.size - 1)
+        }
+        Tabs.save(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Tabs.save(this)
     }
 
     override fun onFullscreenChanged(enabled: Boolean) {
@@ -312,6 +367,8 @@ private fun Modifier.pressScale(source: MutableInteractionSource): Modifier {
 private fun Dock(
     blockedCount: Int,
     onFullscreen: () -> Unit,
+    tabCount: Int,
+    onTabs: () -> Unit,
     urlState: TextFieldState,
     navigator: ServoNavigator,
     isRefreshing: Boolean,
@@ -428,6 +485,27 @@ private fun Dock(
 
             AnimatedVisibility(visible = !focused, enter = enter, exit = exit) {
                 val src = remember { MutableInteractionSource() }
+                FilledTonalIconButton(
+                    onClick = onTabs,
+                    interactionSource = src,
+                    modifier = Modifier.size(40.dp).pressScale(src),
+                ) {
+                    Box(
+                        Modifier.size(20.dp)
+                            .border(1.6.dp, MaterialTheme.colorScheme.onSecondaryContainer, RoundedCornerShape(6.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            if (tabCount > 99) ":)" else tabCount.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                }
+            }
+
+            AnimatedVisibility(visible = !focused, enter = enter, exit = exit) {
+                val src = remember { MutableInteractionSource() }
                 Box {
                     FilledIconButton(
                         onClick = { menuOpen = true },
@@ -499,5 +577,59 @@ private fun Dock(
             }
         }
       }
+    }
+}
+
+
+/** Ações das abas: mantém a lista do app e o motor em sincronia. */
+class TabActions(
+    private val context: android.content.Context,
+    private val navigator: ServoNavigator,
+    private val home: String,
+) {
+    fun switchTo(index: Int) {
+        if (index !in Tabs.list.indices || index == Tabs.active) return
+        Tabs.active = index
+        navigator.switchTab(index)
+        loadIfPending(index)
+        Tabs.save(context)
+    }
+
+    fun newTab() {
+        Tabs.list.add(Tab(Tabs.newId(), "", "Nova aba"))
+        Tabs.active = Tabs.list.size - 1
+        navigator.newTab(home)
+        Tabs.save(context)
+    }
+
+    fun close(index: Int) {
+        if (index !in Tabs.list.indices) return
+        if (Tabs.list.size == 1) {
+            Tabs.list[0] = Tab(Tabs.list[0].id, "", "Nova aba")
+            navigator.navigate(home)
+            Tabs.save(context)
+            return
+        }
+        val wasActive = index == Tabs.active
+        val newActive =
+            when {
+                wasActive -> index.coerceAtMost(Tabs.list.size - 2)
+                index < Tabs.active -> Tabs.active - 1
+                else -> Tabs.active
+            }
+        Tabs.list.removeAt(index)
+        Tabs.active = newActive
+        navigator.closeTab(index)
+        navigator.switchTab(newActive)
+        loadIfPending(newActive)
+        Tabs.save(context)
+    }
+
+    private fun loadIfPending(index: Int) {
+        val tab = Tabs.list[index]
+        if (tab.pending) {
+            navigator.navigate(if (tab.url.isEmpty()) home else tab.url)
+            Tabs.list[index] = tab.copy(pending = false)
+        }
     }
 }
