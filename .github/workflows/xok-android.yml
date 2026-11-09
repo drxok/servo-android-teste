@@ -20,12 +20,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
       - name: Instalar plataforma do Android
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          SDKM="$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | head -1)"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-35" "build-tools;35.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -54,6 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sleep 3
+          touch "$RUNNER_TEMP/full.log"
           mkdir logrepo
           cd logrepo
           git init -q -b logs-xok
