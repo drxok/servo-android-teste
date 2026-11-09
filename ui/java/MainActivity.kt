@@ -249,6 +249,9 @@ class MainActivity : ComponentActivity(), Servo.Client {
                         onHistory = { historyActivityResultLauncher.launch(
                             Intent(this@MainActivity, HistoryActivity::class.java)
                         ) },
+                        onDownloads = {
+                            startActivity(Intent(this@MainActivity, DownloadsActivity::class.java))
+                        },
                         onSettings = {
                             startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                         },
@@ -333,6 +336,10 @@ class MainActivity : ComponentActivity(), Servo.Client {
         }
     }
 
+    override fun onDownloadRequested(url: String) {
+        DownloadsStore.enqueue(this, url)
+    }
+
     override fun onTabsChanged(count: Int, active: Int) {
         // Abas criadas ou fechadas pela própria página (ex.: links que abrem em nova aba).
         if (count > Tabs.list.size) {
@@ -388,6 +395,7 @@ private fun Dock(
     isRefreshing: Boolean,
     onSubmit: (String) -> Unit,
     onHistory: () -> Unit,
+    onDownloads: () -> Unit,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -576,6 +584,14 @@ private fun Dock(
                             onClick = {
                                 menuOpen = false
                                 navigator.forward()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Downloads") },
+                            leadingIcon = { Icon(painterResource(R.drawable.download), null, modifier = Modifier.size(20.dp)) },
+                            onClick = {
+                                menuOpen = false
+                                onDownloads()
                             },
                         )
                         DropdownMenuItem(

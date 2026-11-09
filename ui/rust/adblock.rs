@@ -201,3 +201,39 @@ const TRACKERS: &[&str] = &[
     "kochava.com",
     "singular.net",
 ];
+
+
+// ---------------- Downloads ----------------
+static PENDING_DOWNLOADS: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+const DOWNLOAD_EXTENSIONS: &[&str] = &[
+    "apk", "apks", "xapk", "aab", "zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz", "iso", "img", "exe", "msi",
+    "dmg", "deb", "rpm", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "csv", "epub",
+    "mp3", "m4a", "flac", "wav", "ogg", "opus", "aac", "mp4", "mkv", "avi", "mov", "webm", "m4v", "3gp",
+    "bin", "rom", "gba", "nds", "sfc", "smc", "nes", "chd", "cue", "pkg", "jar",
+];
+
+/// Se a navegação é para um arquivo para baixar, guarda a URL na fila e devolve `true`.
+pub fn take_if_download(url: &url::Url) -> bool {
+    let path = url.path().to_ascii_lowercase();
+    let Some(ext) = path.rsplit('.').next() else {
+        return false;
+    };
+    if path.rsplit('/').next().map_or(true, |name| !name.contains('.')) {
+        return false;
+    }
+    if !DOWNLOAD_EXTENSIONS.contains(&ext) {
+        return false;
+    }
+    if let Ok(mut queue) = PENDING_DOWNLOADS.lock() {
+        queue.push(url.as_str().to_string());
+    }
+    true
+}
+
+pub fn drain_downloads() -> Vec<String> {
+    PENDING_DOWNLOADS
+        .lock()
+        .map(|mut q| std::mem::take(&mut *q))
+        .unwrap_or_default()
+}

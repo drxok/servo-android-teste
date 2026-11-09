@@ -361,4 +361,59 @@ edit(
     [("        .enable_http1()\n        .enable_http2()\n        .wrap_connector(ProxyConnector::new());",
       "        .enable_http1()\n        .wrap_connector(ProxyConnector::new());")],
 )
+
+# ======================= DOWNLOADS =======================
+edit(
+    "ports/servoshell/running_app_state.rs",
+    [("    fn load_web_resource(&self, _webview: WebView, load: servo::WebResourceLoad) {\n",
+      "    fn request_navigation(&self, _webview: WebView, request: servo::NavigationRequest) {\n"
+      "        if crate::adblock::take_if_download(&request.url) {\n            request.deny();\n        } else {\n            request.allow();\n        }\n    }\n\n"
+      "    fn load_web_resource(&self, _webview: WebView, load: servo::WebResourceLoad) {\n")],
+)
+edit(
+    "ports/servoshell/egl/host_trait.rs",
+    [("    fn on_tabs_changed(&self, _count: u32, _active: u32) {}\n",
+      "    fn on_tabs_changed(&self, _count: u32, _active: u32) {}\n"
+      "    /// Um link de arquivo foi aberto: o app deve baixá-lo.\n"
+      "    fn on_download_requested(&self, _url: String) {}\n")],
+)
+edit(
+    "ports/servoshell/egl/app.rs",
+    [("            self.host.on_shutdown_complete()\n        }\n    }\n\n    /// Load an URL.",
+      "            self.host.on_shutdown_complete()\n        }\n"
+      "        for url in crate::adblock::drain_downloads() {\n            self.host.on_download_requested(url);\n        }\n    }\n\n    /// Load an URL.")],
+)
+edit(
+    "ports/servoshell/egl/android/mod.rs",
+    [("    fn on_tabs_changed(&self, count: u32, active: u32) {\n",
+      "    fn on_download_requested(&self, url: String) {\n"
+      "        self.jvm\n            .attach_current_thread(|env| -> Result<(), Error> {\n"
+      "                let Ok(url_string) = new_string_as_jvalue(env, &url) else {\n                    return Ok(());\n                };\n"
+      "                env.call_method(\n                    callback_ref(),\n"
+      "                    jni_str!(\"onDownloadRequested\"),\n"
+      "                    jni_sig!(\"(Ljava/lang/String;)V\"),\n"
+      "                    &[(&url_string).into()],\n                )?;\n"
+      "                Ok(())\n            })\n            .unwrap();\n    }\n\n"
+      "    fn on_tabs_changed(&self, count: u32, active: u32) {\n")],
+)
+edit(
+    f"{base2}/JNIServo.kt",
+    [("        fun onTabsChanged(count: Int, active: Int)\n    }\n}",
+      "        fun onTabsChanged(count: Int, active: Int)\n\n        fun onDownloadRequested(url: String)\n    }\n}")],
+)
+edit(
+    f"{base2}/Servo.kt",
+    [
+        ("        fun onTabsChanged(count: Int, active: Int) {}\n    }\n\n    private class Callbacks(",
+         "        fun onTabsChanged(count: Int, active: Int) {}\n\n        fun onDownloadRequested(url: String) {}\n    }\n\n    private class Callbacks("),
+        ("        override fun onTabsChanged(count: Int, active: Int) {\n            scope.launch { client.onTabsChanged(count, active) }\n        }\n\n",
+         "        override fun onTabsChanged(count: Int, active: Int) {\n            scope.launch { client.onTabsChanged(count, active) }\n        }\n\n"
+         "        override fun onDownloadRequested(url: String) {\n            scope.launch { client.onDownloadRequested(url) }\n        }\n\n"),
+    ],
+)
+edit(
+    "support/android/apk/servoapp/src/main/AndroidManifest.xml",
+    [('        <activity android:name=".HistoryActivity"',
+      '        <activity android:name=".DownloadsActivity"\n            android:configChanges="density|keyboardHidden|navigation|orientation|screenSize|uiMode"\n            android:exported="true"\n            android:theme="@style/AppTheme">\n        </activity>\n        <activity android:name=".HistoryActivity"')],
+)
 print("patch ok")
