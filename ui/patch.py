@@ -354,4 +354,11 @@ for _rel in ["components/shared/net/lib.rs", "components/net_traits/lib.rs"]:
         break
 if not _done:
     print("AVISO: não achei from_hyper_error; diagnóstico de rede não aplicado")
+
+# --- Rede: só HTTP/1.1 (o HTTP/2 do Servo dá "stream error" no YouTube) ---
+edit(
+    "components/net/connector.rs",
+    [("        .enable_http1()\n        .enable_http2()\n        .wrap_connector(ProxyConnector::new());",
+      "        .enable_http1()\n        .wrap_connector(ProxyConnector::new());")],
+)
 print("patch ok")
