@@ -1,0 +1,400 @@
+   Compiling detect-targets v0.1.96
+   Compiling clap v4.6.7
+   Compiling guess_host_triple v0.1.5
+   Compiling atomic-file-install v1.0.14
+   Compiling embed-resource v3.0.12
+   Compiling cargo-toml-workspace v7.0.11
+   Compiling leon-macros v1.0.4
+   Compiling simple-git v0.2.38
+   Compiling merge_derive v0.2.0
+   Compiling sha2 v0.11.1
+   Compiling binstalk-git-repo-api v0.5.53
+   Compiling itertools v0.15.0
+   Compiling nix v0.27.1
+   Compiling lazy_static v1.5.1
+   Compiling base16 v0.2.1
+   Compiling option-ext v0.2.0
+   Compiling minisign-verify v0.3.0
+   Compiling binstalk-fetchers v0.10.53
+   Compiling dirs-sys v0.5.0
+   Compiling binstalk-registry v0.12.12
+   Compiling command-group v5.0.1
+   Compiling sharded-slab v0.1.7
+   Compiling merge v0.2.0
+   Compiling cargo-binstall v1.26.2
+   Compiling binstalk-bins v0.7.0
+   Compiling jobslot v0.2.24
+   Compiling toml_edit v0.25.17+spec-1.1.0
+   Compiling beef v0.5.2
+   Compiling tracing-serde v0.2.0
+   Compiling fs-lock v0.1.16
+   Compiling thread_local v1.1.10
+   Compiling home v0.5.12
+   Compiling nu-ansi-term v0.50.3
+   Compiling tracing-subscriber v0.3.23
+   Compiling binstalk-manifests v0.19.11
+   Compiling binstalk v0.29.6
+   Compiling dirs v7.0.0
+   Compiling clap_complete v4.6.11
+   Compiling clap-cargo v0.19.0
+   Compiling tracing-log v0.2.0
+   Compiling file-format v0.29.0
+    Finished `release` profile [optimized] target(s) in 4m 03s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+  Installing /home/runner/.cargo/bin/cargo-binstall
+   Installed package `cargo-binstall v1.26.2` (executable `cargo-binstall`)
+cargo-binstall:  INFO the current QuickInstall statistics endpoint url="https://cargo-quickinstall-stats-server.fly.dev/record-install"
+
+Binstall would like to collect install statistics for the QuickInstall project
+to help inform which packages should be included in its index in the future.
+If you agree, please type 'yes'. If you disagree, telemetry will not be sent.
+You can change this at any time by editing the binstall settings file.
+Opt in to telemetry? yes/[no] cargo-binstall:  INFO Settings saved path="/home/runner/.cargo/binstall.toml"
+cargo-binstall:  INFO resolve: Resolving package: 'taplo-cli'
+cargo-binstall:  INFO get_repo_info{self=Data { name: "taplo-cli", version: "0.10.0", repo: Some("https://github.com/tamasfe/taplo"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/tamasfe/taplo", query: None, fragment: None }, headers: {} } url=https://github.com/tamasfe/taplo}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  INFO get_repo_info{self=Data { name: "taplo-cli", version: "0.10.0", repo: Some("https://github.com/tamasfe/taplo"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/tamasfe/taplo", query: None, fragment: None }, headers: {} } url=https://github.com/tamasfe/taplo}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  INFO get_repo_info{self=Data { name: "taplo-cli", version: "0.10.0", repo: Some("https://github.com/tamasfe/taplo"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/tamasfe/taplo", query: None, fragment: None }, headers: {} } url=https://github.com/tamasfe/taplo}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  WARN resolve: Error while downloading and extracting from fetcher QuickInstall: Failed to download from remote: could not GET https://github.com/cargo-bins/cargo-quickinstall/releases/download/taplo-cli-0.10.0/taplo-cli-0.10.0-x86_64-unknown-linux-gnu.tar.gz: HTTP status client error (404 Not Found) for url (https://github.com/cargo-bins/cargo-quickinstall/releases/download/taplo-cli-0.10.0/taplo-cli-0.10.0-x86_64-unknown-linux-gnu.tar.gz)
+cargo-binstall:  WARN resolve: Error while downloading and extracting from fetcher QuickInstall: Failed to download from remote: could not GET https://github.com/cargo-bins/cargo-quickinstall/releases/download/taplo-cli-0.10.0/taplo-cli-0.10.0-x86_64-unknown-linux-musl.tar.gz: HTTP status client error (404 Not Found) for url (https://github.com/cargo-bins/cargo-quickinstall/releases/download/taplo-cli-0.10.0/taplo-cli-0.10.0-x86_64-unknown-linux-musl.tar.gz)
+cargo-binstall:  WARN The package taplo-cli v0.10.0 will be installed from source (with cargo)
+Do you wish to continue? [yes]/no     Updating crates.io index
+  Installing taplo-cli v0.10.0
+warning: default toolchain implicitly overridden with `1.99.1-x86_64-unknown-linux-gnu` by rustup toolchain file
+  |
+  = help: use `cargo +stable install` if you meant to use the stable toolchain
+  = note: rustup selects the toolchain based on the parent environment and not the environment of the package being installed
+    Updating crates.io index
+     Locking 284 packages to highest compatible versions
+      Adding codespan-reporting v0.11.1 (available: v0.13.1)
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding itertools v0.10.5 (available: v0.15.0)
+      Adding prettydiff v0.6.4 (available: v0.9.0)
+      Adding reqwest v0.11.27 (available: v0.13.5)
+      Adding schemars v0.8.22 (available: v1.2.3)
+      Adding toml v0.7.8 (available: v1.2.1+spec-1.1.0)
+ Downloading crates ...
+  Downloaded uuid v1.29.2
+  Downloaded itoa v1.0.19
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling libc v0.2.191
+   Compiling cfg-if v1.0.5
+   Compiling serde_core v1.0.229
+   Compiling memchr v2.8.3
+   Compiling version_check v0.9.5
+   Compiling crossbeam-utils v0.8.23
+   Compiling syn v3.0.9
+   Compiling crossbeam-epoch v0.9.21
+   Compiling stable_deref_trait v1.2.1
+   Compiling smallvec v1.16.5
+   Compiling crossbeam-deque v0.8.8
+   Compiling serde v1.0.229
+   Compiling rayon-core v1.13.0
+   Compiling autocfg v1.5.1
+   Compiling either v1.19.0
+   Compiling hashbrown v0.17.1
+   Compiling itoa v1.0.19
+   Compiling once_cell v1.21.4
+   Compiling rayon v1.12.0
+   Compiling equivalent v1.0.3
+   Compiling pin-project-lite v0.2.17
+   Compiling syn v2.0.119
+   Compiling utf_types v1.0.0
+   Compiling writeable v0.6.4
+   Compiling litemap v0.8.3
+   Compiling utf8_iter v1.1.0
+   Compiling icu_normalizer_data v2.4.0
+   Compiling scopeguard v1.2.0
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_properties_data v2.4.0
+   Compiling find-msvc-tools v0.1.15
+   Compiling zmij v1.0.23
+   Compiling futures-core v0.3.34
+   Compiling shlex v2.0.1
+   Compiling cc v1.11.1
+   Compiling synstructure v0.14.0
+   Compiling indexmap v2.14.2
+   Compiling lock_api v0.4.14
+   Compiling num-traits v0.2.19
+   Compiling bytes v1.12.1
+   Compiling serde_json v1.0.154
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.7
+   Compiling zerofrom v0.1.8
+   Compiling displaydoc v0.2.7
+   Compiling yoke v0.8.4
+   Compiling futures-sink v0.3.34
+   Compiling ring v0.17.14
+   Compiling zerovec v0.11.9
+   Compiling zerotrie v0.2.5
+   Compiling parking_lot v0.12.5
+   Compiling tracing-core v0.1.36
+   Compiling foldhash v0.2.0
+   Compiling tinystr v0.8.5
+   Compiling potential_utf v0.1.6
+   Compiling icu_locale_core v2.4.0
+   Compiling icu_collections v2.4.0
+   Compiling zerocopy v0.8.63
+   Compiling getrandom v0.3.4
+   Compiling percent-encoding v2.3.2
+   Compiling form_urlencoded v1.2.2
+   Compiling icu_provider v2.4.0
+   Compiling icu_normalizer v2.4.0
+   Compiling icu_properties v2.4.0
+   Compiling idna_adapter v1.2.2
+   Compiling tracing-attributes v0.1.31
+   Compiling futures-channel v0.3.34
+   Compiling futures-macro v0.3.34
+   Compiling tokio-macros v2.7.2
+   Compiling mio v1.2.4
+   Compiling socket2 v0.6.5
+   Compiling getrandom v0.2.17
+   Compiling aho-corasick v1.1.5
+   Compiling ahash v0.8.12
+   Compiling log v0.4.35
+   Compiling slab v0.4.12
+   Compiling regex-syntax v0.8.11
+   Compiling futures-io v0.3.34
+   Compiling futures-task v0.3.34
+   Compiling rustversion v1.0.23
+   Compiling futures-util v0.3.34
+   Compiling tokio v1.54.1
+   Compiling regex-automata v0.4.18
+   Compiling tracing v0.1.44
+   Compiling idna v1.1.0
+   Compiling untrusted v0.9.0
+   Compiling url v2.5.8
+   Compiling num-integer v0.1.47
+   Compiling generic-array v0.14.7
+   Compiling fnv v1.0.7
+   Compiling http v0.2.12
+   Compiling memoffset v0.9.1
+   Compiling typenum v1.20.1
+   Compiling allocator-api2 v0.2.21
+   Compiling syn v1.0.109
+   Compiling rustls v0.21.12
+   Compiling httparse v1.10.1
+   Compiling hashbrown v0.14.5
+   Compiling num-bigint v0.4.8
+   Compiling sct v0.7.1
+   Compiling rustls-webpki v0.101.7
+   Compiling tokio-util v0.7.20
+   Compiling time-core v0.1.9
+   Compiling anyhow v1.0.104
+   Compiling lazy_static v1.5.1
+   Compiling try-lock v0.2.5
+   Compiling num-conv v0.2.2
+   Compiling time-macros v0.2.32
+   Compiling num-rational v0.4.2
+   Compiling h2 v0.3.27
+   Compiling want v0.3.2
+   Compiling http-body v0.4.6
+   Compiling num-iter v0.1.46
+   Compiling encoding_rs v0.8.44
+   Compiling num-complex v0.4.6
+   Compiling serde_derive_internals v0.29.1
+   Compiling deranged v0.5.9
+   Compiling socket2 v0.5.10
+   Compiling beef v0.5.2
+   Compiling regex-syntax v0.6.29
+   Compiling thiserror v1.0.69
+   Compiling rustc-hash v1.1.0
+   Compiling cfg_aliases v0.2.2
+   Compiling schemars v0.8.22
+   Compiling countme v3.0.1
+   Compiling utf8parse v0.2.2
+   Compiling tower-service v0.3.3
+   Compiling base64 v0.21.7
+   Compiling text-size v1.1.1
+   Compiling bit-vec v0.6.3
+   Compiling powerfmt v0.2.1
+   Compiling httpdate v1.0.3
+   Compiling time v0.3.55
+   Compiling hyper v0.14.32
+   Compiling bit-set v0.5.3
+   Compiling rowan v0.15.19
+   Compiling logos-derive v0.12.1
+   Compiling anstyle-parse v1.0.0
+   Compiling nix v0.31.3
+   Compiling schemars_derive v0.8.22
+   Compiling tokio-rustls v0.24.1
+   Compiling num v0.4.3
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling regex v1.13.1
+   Compiling futures-executor v0.3.34
+   Compiling thiserror-impl v1.0.69
+   Compiling nom v8.0.0
+   Compiling bstr v1.13.1
+   Compiling uncased v0.9.10
+   Compiling anstyle-query v1.1.5
+   Compiling core_detect v1.0.0
+   Compiling ryu v1.0.23
+   Compiling multiversion_no_op v1.0.0
+   Compiling dyn-clone v1.0.20
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstyle v1.0.14
+   Compiling simdutf8 v0.1.5
+   Compiling colorchoice v1.0.5
+   Compiling anstream v1.0.0
+   Compiling serde_urlencoded v0.7.1
+   Compiling globset v0.4.21
+   Compiling fancy-regex v0.11.0
+   Compiling iso8601 v0.6.6
+   Compiling futures v0.3.34
+   Compiling digest v0.10.7
+   Compiling fraction v0.13.1
+   Compiling hyper-rustls v0.24.2
+   Compiling logos v0.12.1
+   Compiling rustls-pemfile v1.0.4
+   Compiling sharded-slab v0.1.7
+   Compiling arc-swap v1.9.4
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling async-trait v0.1.92
+   Compiling serde_repr v0.1.21
+   Compiling itertools v0.10.5
+   Compiling figment v0.10.19
+   Compiling thread_local v1.1.10
+   Compiling num-cmp v0.1.0
+   Compiling clap_lex v1.1.1
+   Compiling bitflags v2.13.2
+   Compiling bitflags v1.3.2
+   Compiling heck v0.5.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling webpki-roots v0.25.4
+   Compiling uuid v1.29.2
+   Compiling cpufeatures v0.2.17
+   Compiling ipnet v2.12.2
+   Compiling winnow v0.5.40
+   Compiling unicode-width v0.1.14
+   Compiling mime v0.3.18
+   Compiling strsim v0.11.1
+   Compiling bytecount v0.6.9
+   Compiling sync_wrapper v0.1.2
+   Compiling reqwest v0.11.27
+   Compiling jsonschema v0.17.1
+   Compiling clap_builder v4.6.7
+   Compiling taplo v0.14.0
+   Compiling toml_edit v0.19.15
+   Compiling sha1 v0.10.7
+   Compiling tracing-subscriber v0.3.23
+   Compiling clap_derive v4.6.7
+   Compiling lsp-types v0.93.2
+   Compiling lru v0.11.1
+   Compiling json_value_merge v2.0.1
+   Compiling async-recursion v1.2.0
+   Compiling semver v1.0.28
+   Compiling tap v1.0.1
+   Compiling glob v0.3.4
+   Compiling hex v0.4.3
+   Compiling taplo-common v0.6.0
+   Compiling ctrlc v3.5.2
+   Compiling clap v4.6.7
+   Compiling toml v0.7.8
+   Compiling pad v0.1.6
+   Compiling termcolor v1.4.1
+   Compiling ansi_term v0.12.1
+   Compiling prettydiff v0.6.4
+   Compiling codespan-reporting v0.11.1
+   Compiling clap_complete v4.6.11
+   Compiling lsp-async-stub v0.7.0
+   Compiling async-ctrlc v1.2.0
+   Compiling taplo-lsp v0.8.0
+   Compiling taplo-cli v0.10.0
+    Finished `release` profile [optimized] target(s) in 1m 54s
+  Installing /home/runner/.cargo/bin/taplo
+   Installed package `taplo-cli v0.10.0` (executable `taplo`)
+cargo-binstall:  INFO Cargo finished successfully
+cargo-binstall:  INFO Done in 180.270003313s
+cargo-binstall:  INFO resolve: Resolving package: 'cargo-deny@=0.20.2'
+cargo-binstall:  INFO get_repo_info{self=Data { name: "cargo-deny", version: "0.20.2", repo: Some("https://github.com/EmbarkStudios/cargo-deny"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/EmbarkStudios/cargo-deny", query: None, fragment: None }, headers: {} } url=https://github.com/EmbarkStudios/cargo-deny}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  INFO get_repo_info{self=Data { name: "cargo-deny", version: "0.20.2", repo: Some("https://github.com/EmbarkStudios/cargo-deny"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/EmbarkStudios/cargo-deny", query: None, fragment: None }, headers: {} } url=https://github.com/EmbarkStudios/cargo-deny}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  INFO get_repo_info{self=Data { name: "cargo-deny", version: "0.20.2", repo: Some("https://github.com/EmbarkStudios/cargo-deny"), repo_info: OnceCell { value: None } }}:do_send_request{request=Request { method: HEAD, url: Url { scheme: "https", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("github.com")), port: None, path: "/EmbarkStudios/cargo-deny", query: None, fragment: None }, headers: {} } url=https://github.com/EmbarkStudios/cargo-deny}: Received status code 504 Gateway Timeout, will wait for 200ms and retry
+cargo-binstall:  WARN The package cargo-deny v0.20.2 (x86_64-unknown-linux-musl) has been downloaded from github.com
+cargo-binstall:  INFO This will install the following binaries:
+cargo-binstall:  INFO   - cargo-deny => /home/runner/.cargo/bin/cargo-deny
+Do you wish to continue? [yes]/no cargo-binstall:  INFO Installing binaries...
+cargo-binstall:  INFO Done in 12.528355408s
+  Installing crown v0.0.1 (/home/runner/work/servo-android-teste/servo-android-teste/servo/support/crown)
+warning: default toolchain implicitly overridden with `1.99.1-x86_64-unknown-linux-gnu` by rustup toolchain file
+  |
+  = help: use `cargo +stable install` if you meant to use the stable toolchain
+  = note: rustup selects the toolchain based on the parent environment and not the environment of the package being installed
+   Compiling crown v0.0.1 (/home/runner/work/servo-android-teste/servo-android-teste/servo/support/crown)
+    Finished `release` profile [optimized] target(s) in 1.24s
+  Installing /home/runner/.cargo/bin/crown
+   Installed package `crown v0.0.1 (/home/runner/work/servo-android-teste/servo-android-teste/servo/support/crown)` (executable `crown`)
+Now installing dependencies. You may be asked for your sudo password.
+Skipping the following required packages, as they don't exist in this OS version: ['libgstreamer-plugins-good1.0-dev', '', 'libfreetype6-dev']
+Installing missing dependencies...
+ * Installing Rust toolchain...
+ * Installing cargo-binstall...
+ * Installing taplo...
+ * Installing cargo-deny...
+ * Installing crown (the Servo linter)...
+Targeting 'aarch64-linux-android' for cross-compilation
+info: downloading component rust-std
+   Compiling servo-net-traits v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/shared/net)
+   Compiling servo-script-bindings v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/script_bindings)
+   Compiling servoshell v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/ports/servoshell)
+   Compiling servo-devtools-traits v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/shared/devtools)
+   Compiling servo-fonts v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/fonts)
+   Compiling servo-constellation-traits v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/shared/constellation)
+   Compiling servo-script-traits v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/shared/script)
+   Compiling servo-layout-api v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/shared/layout)
+   Compiling servo-script-webcrypto v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/script_webcrypto)
+   Compiling servo-script-webgpu v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/script_webgpu)
+   Compiling servo-metrics v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/metrics)
+   Compiling servo-script v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/script)
+   Compiling servo-net v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/net)
+   Compiling servo-canvas v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/canvas)
+   Compiling servo-paint v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/paint)
+   Compiling servo-constellation v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/constellation)
+   Compiling servo-devtools v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/devtools)
+   Compiling servo-storage v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/storage)
+   Compiling servo-layout v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/layout)
+   Compiling servo v0.8.0 (/home/runner/work/servo-android-teste/servo-android-teste/servo/components/servo)
+      Timing report saved to /home/runner/work/servo-android-teste/servo-android-teste/servo/target/cargo-timings/cargo-timing-20261109T053647111Z-982b8bed51f3f155.html
+    Finished `release` profile [optimized] target(s) in 5m 41s
+Fetching distribution.
+Downloading https://services.gradle.org/distributions/gradle-9.8.2-bin.zip
+
+Attempt 1/1 failed. Reason: Downloading from https://services.gradle.org/distributions/gradle-9.8.2-bin.zip failed: timeout (10000ms)
+Exception in thread "main" java.io.IOException: Downloading from https://services.gradle.org/distributions/gradle-9.8.2-bin.zip failed: timeout (10000ms)
+	at org.gradle.wrapper.Download.download(SourceFile:1)
+	at org.gradle.wrapper.Install.forceFetch(SourceFile)
+	at org.gradle.wrapper.Install.lambda$createDist$0(SourceFile:9)
+	at org.gradle.wrapper.Install.createDist(SourceFile:24)
+	at org.gradle.wrapper.GradleWrapperMain.lambda$prepareWrapper$0(SourceFile:2)
+	at org.gradle.wrapper.GradleWrapperMain.main(SourceFile:2)
+Caused by: java.net.SocketTimeoutException: Read timed out
+	at java.base/sun.nio.ch.NioSocketImpl.timedRead(NioSocketImpl.java:277)
+	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:302)
+	at java.base/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:354)
+	at java.base/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:798)
+	at java.base/java.net.Socket$SocketInputStream.implRead(Socket.java:974)
+	at java.base/java.net.Socket$SocketInputStream.read(Socket.java:964)
+	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:489)
+	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:483)
+	at java.base/sun.security.ssl.SSLSocketInputRecord.bytesInCompletePacket(SSLSocketInputRecord.java:70)
+	at java.base/sun.security.ssl.SSLSocketImpl.readApplicationRecord(SSLSocketImpl.java:1461)
+	at java.base/sun.security.ssl.SSLSocketImpl$AppInputStream.read(SSLSocketImpl.java:1068)
+	at java.base/java.io.BufferedInputStream.fill(BufferedInputStream.java:289)
+	at java.base/java.io.BufferedInputStream.read1(BufferedInputStream.java:330)
+	at java.base/java.io.BufferedInputStream.read(BufferedInputStream.java:388)
+	at java.base/sun.net.www.http.HttpClient.parseHTTPHeader(HttpClient.java:803)
+	at java.base/sun.net.www.http.HttpClient.parseHTTP(HttpClient.java:735)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1403)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1306)
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:493)
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307)
+	... 6 more
+Building `release` build with crown disabled (no JS garbage collection linting).
+Packaging Android exited with return value 1
