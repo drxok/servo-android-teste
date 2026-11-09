@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "br.xok.browser"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "br.xok.browser"
