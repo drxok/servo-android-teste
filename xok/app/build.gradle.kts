@@ -44,6 +44,11 @@ android {
         checkReleaseBuilds = false
         abortOnError = false
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     buildFeatures {
         compose = true
     }

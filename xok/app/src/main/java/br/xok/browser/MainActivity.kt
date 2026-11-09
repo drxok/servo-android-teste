@@ -107,13 +107,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        CrashLog.install(this)
+        val previousCrash = CrashLog.read(this)
+        if (previousCrash != null) {
+            CrashLog.show(this, previousCrash)
+            return
+        }
+
         Tabs.load(this)
         if (Intent.ACTION_VIEW == intent.action && intent.data != null) {
             Tabs.list.add(Tab(Tabs.newId(), intent.data.toString(), ""))
             Tabs.active = Tabs.list.size - 1
         }
         historyManager = HistoryManager(this)
-        controller = BrowserController(this)
+        try {
+            controller = BrowserController(this)
+        } catch (e: Throwable) {
+            CrashLog.save(this, e)
+            CrashLog.show(this, CrashLog.read(this) ?: e.toString())
+            return
+        }
 
         val chooserLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -315,7 +328,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        Tabs.save(this)
+        if (::controller.isInitialized) Tabs.save(this)
     }
 }
 
