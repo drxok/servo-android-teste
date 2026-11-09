@@ -8,6 +8,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
@@ -41,6 +43,7 @@ import java.io.ByteArrayInputStream
 
 /** Controla o WebView (o motor) e guarda o estado que a interface mostra. */
 class BrowserController(private val activity: ComponentActivity) {
+    /** O WebView da aba que está na tela. */
     lateinit var webView: WebView
         private set
 
@@ -60,12 +63,23 @@ class BrowserController(private val activity: ComponentActivity) {
     var onPageDone: (String, String?) -> Unit = { _, _ -> }
     var launchChooser: (Intent) -> Unit = {}
 
-    /** Estados (histórico e rolagem) das abas que não estão na tela. */
-    val states = HashMap<Long, Bundle>()
+    private lateinit var container: FrameLayout
+    private var darkAllowed = false
+
+    /** Cada aba tem o seu próprio WebView (histórico e rolagem separados). */
+    private val views = LinkedHashMap<Long, WebView>()
+    private val tabOf = HashMap<WebView, Long>()
+
+    /** Estado das abas cujo WebView foi descartado para economizar memória. */
+    private val states = HashMap<Long, Bundle>()
 
     private var customCallback: WebChromeClient.CustomViewCallback? = null
     private var fileCallback: ValueCallback<Array<Uri>>? = null
-    private var clearHistoryPending = false
+
+    fun createContainer(): FrameLayout {
+        container = FrameLayout(activity)
+        return container
+    }
 
     fun navigate(url: String) = webView.loadUrl(url)
 
@@ -81,25 +95,69 @@ class BrowserController(private val activity: ComponentActivity) {
 
     fun stop() = webView.stopLoading()
 
-    fun saveState(tabId: Long) {
-        val bundle = Bundle()
-        webView.saveState(bundle)
-        states[tabId] = bundle
-    }
-
-    /** Mostra uma aba: restaura o que estava nela ou carrega o endereço. */
-    fun show(tab: Tab, home: String) {
-        val saved = states[tab.id]
-        if (saved != null) {
-            webView.restoreState(saved)
-        } else {
-            showFresh(tab.url.ifEmpty { home })
+    private fun attach(tabId: Long, wv: WebView) {
+        val old = if (::webView.isInitialized) webView else null
+        if (old != null && old !== wv) old.onPause()
+        container.removeAllViews()
+        (wv.parent as? ViewGroup)?.removeView(wv)
+        container.addView(wv, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        webView = wv
+        wv.onResume()
+        // mantém no máximo 3 WebViews vivos; os mais antigos guardam o estado e são descartados
+        views.remove(tabId)
+        views[tabId] = wv
+        while (views.size > 3) {
+            val oldest = views.entries.first()
+            if (oldest.value === wv) break
+            val bundle = Bundle()
+            oldest.value.saveState(bundle)
+            states[oldest.key] = bundle
+            dispose(oldest.key)
         }
+        loading = wv.progress in 1..99
+        progress = wv.progress
+        refreshNav(wv)
+        wv.url?.let { onUrl(it) }
+        wv.title?.let { onTitle(it) }
     }
 
-    fun showFresh(url: String) {
-        clearHistoryPending = true
-        webView.loadUrl(url)
+    private fun dispose(tabId: Long) {
+        val wv = views.remove(tabId) ?: return
+        tabOf.remove(wv)
+        (wv.parent as? ViewGroup)?.removeView(wv)
+        wv.stopLoading()
+        wv.destroy()
+    }
+
+    /** Mostra uma aba: usa o WebView dela, ou recria (restaurando o estado ou carregando o endereço). */
+    fun show(tab: Tab, home: String) {
+        val existing = views[tab.id]
+        if (existing != null) {
+            attach(tab.id, existing)
+            return
+        }
+        val wv = newWebView(tab.id)
+        val saved = states.remove(tab.id)
+        attach(tab.id, wv)
+        if (saved != null) wv.restoreState(saved) else wv.loadUrl(tab.url.ifEmpty { home })
+    }
+
+    /** Aba nova (ou reiniciada): WebView limpo, sem histórico. */
+    fun open(tabId: Long, url: String) {
+        dispose(tabId)
+        states.remove(tabId)
+        val wv = newWebView(tabId)
+        attach(tabId, wv)
+        wv.loadUrl(url)
+    }
+
+    fun discard(tabId: Long) {
+        states.remove(tabId)
+        if (::webView.isInitialized && views[tabId] === webView) {
+            // o WebView que está na tela só sai depois que outra aba assumir
+            container.removeAllViews()
+        }
+        dispose(tabId)
     }
 
     fun hideCustomView() {
@@ -115,8 +173,8 @@ class BrowserController(private val activity: ComponentActivity) {
     }
 
     @Suppress("DEPRECATION")
-    fun applyDark(allow: Boolean) {
-        val settings = webView.settings
+    private fun applyDarkTo(wv: WebView, allow: Boolean) {
+        val settings = wv.settings
         if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
             WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, allow)
         } else if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
@@ -127,10 +185,15 @@ class BrowserController(private val activity: ComponentActivity) {
         }
     }
 
+    fun applyDark(allow: Boolean) {
+        darkAllowed = allow
+        views.values.forEach { applyDarkTo(it, allow) }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
-    fun createWebView(): WebView {
+    private fun newWebView(tabId: Long): WebView {
         val view = WebView(activity)
-        webView = view
+        tabOf[view] = tabId
         val s = view.settings
         s.javaScriptEnabled = true
         s.domStorageEnabled = true
@@ -147,6 +210,7 @@ class BrowserController(private val activity: ComponentActivity) {
         // Tira "wv" e "Version/4.0" do identificador: sites tratam como Chrome normal.
         s.userAgentString = s.userAgentString.replace("; wv", "").replace(" Version/4.0", "")
         CookieManager.getInstance().setAcceptCookie(true)
+        applyDarkTo(view, darkAllowed)
 
         view.setDownloadListener { url, userAgent, contentDisposition, mime, _ ->
             DownloadsStore.enqueue(activity, url, userAgent, contentDisposition, mime)
@@ -260,22 +324,21 @@ class BrowserController(private val activity: ComponentActivity) {
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                if (view !== webView) return
                 loading = true
                 onUrl(url)
                 refreshNav(view)
             }
 
             override fun onPageFinished(view: WebView, url: String) {
+                if (view !== webView) return
                 loading = false
-                if (clearHistoryPending) {
-                    clearHistoryPending = false
-                    view.clearHistory()
-                }
                 refreshNav(view)
                 onPageDone(url, view.title)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
+                if (view !== webView) return
                 onUrl(url)
                 refreshNav(view)
             }
@@ -299,11 +362,11 @@ class BrowserController(private val activity: ComponentActivity) {
     private fun chromeClient() =
         object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
-                progress = newProgress
+                if (view === webView) progress = newProgress
             }
 
             override fun onReceivedTitle(view: WebView, title: String) {
-                onTitle(title)
+                if (view === webView) onTitle(title)
             }
 
             override fun onCreateWindow(

@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
                         controller.customView != null -> controller.hideCustomView()
                         showTabs -> showTabs = false
                         manualFullscreen -> manualFullscreen = false
-                        controller.canGoBack -> controller.back()
+                        controller.webView.canGoBack() -> controller.back()
                         else -> {
                             isEnabled = false
                             onBackPressedDispatcher.onBackPressed()
@@ -222,7 +222,7 @@ class MainActivity : ComponentActivity() {
                         }
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             AndroidView(
-                                factory = { controller.createWebView() },
+                                factory = { controller.createContainer() },
                                 modifier = Modifier.fillMaxSize(),
                             )
                             if (controller.loading && controller.progress < 100) {
@@ -579,26 +579,25 @@ class TabActions(
 ) {
     fun switchTo(index: Int) {
         if (index !in Tabs.list.indices || index == Tabs.active) return
-        controller.saveState(Tabs.list[Tabs.active].id)
         Tabs.active = index
         controller.show(Tabs.list[index], home)
         Tabs.save(context)
     }
 
     fun newTab(url: String = "") {
-        controller.saveState(Tabs.list[Tabs.active].id)
-        Tabs.list.add(Tab(Tabs.newId(), url, if (url.isEmpty()) "Nova aba" else ""))
+        val tab = Tab(Tabs.newId(), url, if (url.isEmpty()) "Nova aba" else "")
+        Tabs.list.add(tab)
         Tabs.active = Tabs.list.size - 1
-        controller.showFresh(url.ifEmpty { home })
+        controller.open(tab.id, url.ifEmpty { home })
         Tabs.save(context)
     }
 
     fun close(index: Int) {
         if (index !in Tabs.list.indices) return
         if (Tabs.list.size == 1) {
-            controller.states.remove(Tabs.list[0].id)
-            Tabs.list[0] = Tab(Tabs.list[0].id, "", "Nova aba")
-            controller.showFresh(home)
+            val id = Tabs.list[0].id
+            Tabs.list[0] = Tab(id, "", "Nova aba")
+            controller.open(id, home)
             Tabs.save(context)
             return
         }
@@ -609,10 +608,11 @@ class TabActions(
                 index < Tabs.active -> Tabs.active - 1
                 else -> Tabs.active
             }
-        controller.states.remove(Tabs.list[index].id)
+        val closedId = Tabs.list[index].id
         Tabs.list.removeAt(index)
         Tabs.active = newActive
         if (wasActive) controller.show(Tabs.list[newActive], home)
+        controller.discard(closedId)
         Tabs.save(context)
     }
 }
