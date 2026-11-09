@@ -56,9 +56,9 @@ jobs:
           sleep 3
           mkdir logrepo
           cd logrepo
-          git init -q -b logs
+          git init -q -b logs-xok
           grep -n -E "^e: |error:|FAILED|What went wrong|Execution failed|Unresolved|wrong" "$RUNNER_TEMP/full.log" | head -80 > log.txt || true
           tail -n 120 "$RUNNER_TEMP/full.log" >> log.txt || echo "sem log" > log.txt
           git add log.txt
           git -c user.name=ci -c user.email=ci@example.com commit -q -m "log da falha do Xok"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" logs
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" logs-xok
