@@ -134,6 +134,7 @@ class MainActivity : ComponentActivity() {
                 Tabs.update(Tabs.active) { it.copy(url = shown) }
             }
         }
+        controller.onOpenNewTab = { url -> tabActions?.newTab(url) }
         controller.onTitle = { title ->
             Tabs.update(Tabs.active) { it.copy(title = title) }
             Tabs.save(this)
@@ -191,6 +192,8 @@ class MainActivity : ComponentActivity() {
                 val activity = this@MainActivity
                 val actions = remember { TabActions(activity, controller, home).also { tabActions = it } }
                 actions.home = home
+                val newWindow by rememberStringPref(Prefs.NEW_WINDOW, "tab")
+                controller.newTabMode = newWindow == "tab"
                 controller.blockTrackers = blockTrackers
                 controller.httpsOnly = httpsOnly
                 val appDark = cs.background.luminance() < 0.5f

@@ -22,6 +22,13 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.widget.Toast
 import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
@@ -45,6 +52,8 @@ class BrowserController(private val activity: ComponentActivity) {
     var pageFullscreen by mutableStateOf(false)
 
     var blockTrackers = true
+    var newTabMode = true
+    var onOpenNewTab: (String) -> Unit = {}
     var httpsOnly = true
     var onUrl: (String) -> Unit = {}
     var onTitle: (String) -> Unit = {}
@@ -125,6 +134,7 @@ class BrowserController(private val activity: ComponentActivity) {
         val s = view.settings
         s.javaScriptEnabled = true
         s.domStorageEnabled = true
+        s.setSupportMultipleWindows(true)
         s.setSupportZoom(true)
         s.builtInZoomControls = true
         s.displayZoomControls = false
@@ -141,9 +151,65 @@ class BrowserController(private val activity: ComponentActivity) {
         view.setDownloadListener { url, userAgent, contentDisposition, mime, _ ->
             DownloadsStore.enqueue(activity, url, userAgent, contentDisposition, mime)
         }
+        view.setOnLongClickListener { v -> onLongPress(v as WebView) }
         view.webViewClient = client()
         view.webChromeClient = chromeClient()
         return view
+    }
+
+    private fun openLink(url: String, newTab: Boolean) {
+        if (newTab) onOpenNewTab(url) else navigate(url)
+    }
+
+    private fun copyText(text: String) {
+        val cm = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.setPrimaryClip(ClipData.newPlainText("endereço", text))
+        Toast.makeText(activity, "Endereço copiado", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showMenu(items: List<Pair<String, () -> Unit>>) {
+        AlertDialog.Builder(activity)
+            .setItems(items.map { it.first }.toTypedArray()) { _, which -> items[which].second() }
+            .show()
+    }
+
+    /** Segurar o dedo num link ou imagem abre um menu. */
+    private fun onLongPress(view: WebView): Boolean {
+        val hit = view.hitTestResult
+        val extra = hit.extra
+        return when (hit.type) {
+            WebView.HitTestResult.SRC_ANCHOR_TYPE, WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
+                val handler =
+                    Handler(Looper.getMainLooper()) { msg: Message ->
+                        val url = msg.data.getString("url") ?: extra
+                        if (!url.isNullOrEmpty()) {
+                            showMenu(
+                                listOf(
+                                    "Abrir em nova aba" to { openLink(url, true) },
+                                    "Abrir nesta aba" to { openLink(url, false) },
+                                    "Copiar endereço" to { copyText(url) },
+                                    "Baixar link" to { DownloadsStore.enqueue(activity, url, view.settings.userAgentString) },
+                                )
+                            )
+                        }
+                        true
+                    }
+                view.requestFocusNodeHref(handler.obtainMessage())
+                true
+            }
+            WebView.HitTestResult.IMAGE_TYPE -> {
+                if (extra.isNullOrEmpty()) return false
+                showMenu(
+                    listOf(
+                        "Abrir imagem em nova aba" to { openLink(extra, true) },
+                        "Baixar imagem" to { DownloadsStore.enqueue(activity, extra, view.settings.userAgentString) },
+                        "Copiar endereço da imagem" to { copyText(extra) },
+                    )
+                )
+                true
+            }
+            else -> false
+        }
     }
 
     private fun refreshNav(view: WebView) {
@@ -238,6 +304,43 @@ class BrowserController(private val activity: ComponentActivity) {
 
             override fun onReceivedTitle(view: WebView, title: String) {
                 onTitle(title)
+            }
+
+            override fun onCreateWindow(
+                view: WebView,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: Message,
+            ): Boolean {
+                val temp = WebView(activity)
+                temp.settings.javaScriptEnabled = true
+                temp.webViewClient =
+                    object : WebViewClient() {
+                        private var handled = false
+
+                        private fun open(url: String) {
+                            if (handled || url == "about:blank") return
+                            handled = true
+                            openLink(url, newTabMode)
+                            temp.post {
+                                temp.stopLoading()
+                                temp.destroy()
+                            }
+                        }
+
+                        override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
+                            open(request.url.toString())
+                            return true
+                        }
+
+                        override fun onPageStarted(v: WebView, url: String, favicon: Bitmap?) {
+                            open(url)
+                        }
+                    }
+                val transport = resultMsg.obj as WebView.WebViewTransport
+                transport.webView = temp
+                resultMsg.sendToTarget()
+                return true
             }
 
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {

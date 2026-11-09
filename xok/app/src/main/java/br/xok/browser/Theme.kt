@@ -32,6 +32,7 @@ object Prefs {
     const val PAGE_DARK = "page_dark" // off | auto | force
     const val HOME_MODE = "home_mode" // ddg | start | custom
     const val HOME_CUSTOM = "home_custom"
+    const val NEW_WINDOW = "new_window" // tab | same
 }
 
 class Accent(

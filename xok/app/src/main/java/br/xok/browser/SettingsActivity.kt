@@ -69,6 +69,7 @@ class SettingsActivity : ComponentActivity() {
                 val accent by rememberStringPref(Prefs.ACCENT, "lilac")
                 val engine by rememberStringPref(Prefs.ENGINE, "ddg")
                 val homeMode by rememberStringPref(Prefs.HOME_MODE, "ddg")
+                val newWindow by rememberStringPref(Prefs.NEW_WINDOW, "tab")
                 var cleared by remember { mutableStateOf(false) }
 
                 Scaffold(
@@ -211,6 +212,24 @@ class SettingsActivity : ComponentActivity() {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                            }
+                        }
+                        item {
+                            Section("Abas") {
+                                Text(
+                                    "Links que pedem uma janela nova (target=_blank) e o menu ao segurar um link",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("tab" to "Abrir em nova aba", "same" to "Na mesma aba").forEach { (id, label) ->
+                                        FilterChip(
+                                            selected = newWindow == id,
+                                            onClick = { preferences.edit { putString(Prefs.NEW_WINDOW, id) } },
+                                            label = { Text(label) },
+                                        )
+                                    }
+                                }
                             }
                         }
                         item {
