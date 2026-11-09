@@ -149,10 +149,10 @@ class MainActivity : ComponentActivity() {
             object : androidx.activity.OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     when {
-                        controller.customView != null -> controller.hideCustomView()
+                        controller.customView != null || controller.pageFullscreen -> controller.hideCustomView()
                         showTabs -> showTabs = false
                         manualFullscreen -> manualFullscreen = false
-                        controller.webView.canGoBack() -> controller.back()
+                        controller.canGoBack -> controller.back()
                         else -> {
                             isEnabled = false
                             onBackPressedDispatcher.onBackPressed()

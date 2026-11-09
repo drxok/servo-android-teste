@@ -13,7 +13,8 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1"
+        versionName = "0.2"
+        ndk { abiFilters += "arm64-v8a" }
     }
 
     signingConfigs {
@@ -53,6 +54,6 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.core:core-ktx:1.16.0")
-    implementation("androidx.webkit:webkit:1.13.0")
+    implementation("org.mozilla.geckoview:geckoview-arm64-v8a:${providers.gradleProperty("geckoVersion").getOrElse("159.0.20261102144711")}")
     implementation("androidx.preference:preference-ktx:1.2.1")
 }

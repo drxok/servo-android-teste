@@ -1,4 +1,4 @@
-name: Compilar Xok Browser (WebView)
+name: Compilar Xok Browser (GeckoView)
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
       - ".github/workflows/xok-android.yml"
       - "xok/**"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   apk:
