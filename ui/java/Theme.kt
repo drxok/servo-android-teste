@@ -30,6 +30,8 @@ object Prefs {
     const val HTTPS_ONLY = "https_only"
     const val BLOCK_TRACKERS = "block_trackers"
     const val PAGE_DARK = "page_dark" // off | auto | force
+    const val HOME_MODE = "home_mode" // ddg | start | custom
+    const val HOME_CUSTOM = "home_custom"
 }
 
 class Accent(

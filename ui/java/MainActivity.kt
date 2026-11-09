@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity(), Servo.Client {
                 val fullscreen = pageFullscreen || manualFullscreen
                 val cs = MaterialTheme.colorScheme
                 val servoFocusRequester = remember { FocusRequester() }
-                val home = remember {
+                val startPage = remember {
                     startPageUrl(
                         engine,
                         cs.background.toArgb(),
@@ -153,10 +153,19 @@ class MainActivity : ComponentActivity(), Servo.Client {
                         cs.onSurfaceVariant.toArgb(),
                     )
                 }
+                val homeMode by rememberStringPref(Prefs.HOME_MODE, "ddg")
+                val homeCustom by rememberStringPref(Prefs.HOME_CUSTOM, "")
+                val home =
+                    when (homeMode) {
+                        "start" -> startPage
+                        "custom" -> resolveInput(homeCustom, engine, httpsOnly).ifEmpty { "https://duckduckgo.com/" }
+                        else -> "https://duckduckgo.com/"
+                    }
                 val activity = this@MainActivity
                 val restoreUrls = remember { Tabs.list.map { if (it.url.isEmpty()) home else it.url } }
                 val restoreActive = remember { Tabs.active }
                 val actions = remember { TabActions(activity, navigator, home).also { tabActions = it } }
+                actions.home = home
                 BackHandler(enabled = showTabs) { showTabs = false }
                 LaunchedEffect(fullscreen) {
                     val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
@@ -223,6 +232,10 @@ class MainActivity : ComponentActivity(), Servo.Client {
                     if (!fullscreen) Dock(
                         blockedCount = Stats.blocked,
                         onFullscreen = { manualFullscreen = true },
+                        onHome = {
+                            navigator.navigate(home)
+                            servoFocusRequester.requestFocus()
+                        },
                         tabCount = Tabs.list.size,
                         onTabs = { showTabs = true },
                         urlState = urlTextFieldState,
@@ -367,6 +380,7 @@ private fun Modifier.pressScale(source: MutableInteractionSource): Modifier {
 private fun Dock(
     blockedCount: Int,
     onFullscreen: () -> Unit,
+    onHome: () -> Unit,
     tabCount: Int,
     onTabs: () -> Unit,
     urlState: TextFieldState,
@@ -538,6 +552,14 @@ private fun Dock(
                             onClick = {},
                         )
                         DropdownMenuItem(
+                            text = { Text("Página inicial") },
+                            leadingIcon = { Icon(painterResource(R.drawable.home), null, modifier = Modifier.size(20.dp)) },
+                            onClick = {
+                                menuOpen = false
+                                onHome()
+                            },
+                        )
+                        DropdownMenuItem(
                             text = { Text("Tela cheia") },
                             leadingIcon = { Icon(painterResource(R.drawable.refresh), null, modifier = Modifier.size(20.dp)) },
                             onClick = {
@@ -585,7 +607,7 @@ private fun Dock(
 class TabActions(
     private val context: android.content.Context,
     private val navigator: ServoNavigator,
-    private val home: String,
+    var home: String,
 ) {
     fun switchTo(index: Int) {
         if (index !in Tabs.list.indices || index == Tabs.active) return

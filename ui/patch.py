@@ -329,4 +329,29 @@ edit(
     [('<activity android:name=".MainActivity"',
       '<activity android:name=".MainActivity"\n            android:windowSoftInputMode="adjustNothing"')],
 )
+
+# --- Diagnóstico de rede: mostra a causa real do erro "SendRequest" ---
+import os, re
+_done = False
+for _rel in ["components/shared/net/lib.rs", "components/net_traits/lib.rs"]:
+    _p = f"{root}/{_rel}"
+    if not os.path.exists(_p):
+        continue
+    _s = open(_p, encoding="utf-8").read()
+    _old = "let error_string = error.to_string();"
+    if _s.count(_old) == 1:
+        _new = (
+            "let mut error_string = error.to_string();\n"
+            "        {\n            let mut source = std::error::Error::source(error);\n"
+            "            while let Some(cause) = source {\n"
+            "                error_string.push_str(\" <- \");\n"
+            "                error_string.push_str(&cause.to_string());\n"
+            "                source = cause.source();\n            }\n        }"
+        )
+        open(_p, "w", encoding="utf-8").write(_s.replace(_old, _new))
+        print("diagnóstico de rede aplicado em", _rel)
+        _done = True
+        break
+if not _done:
+    print("AVISO: não achei from_hyper_error; diagnóstico de rede não aplicado")
 print("patch ok")

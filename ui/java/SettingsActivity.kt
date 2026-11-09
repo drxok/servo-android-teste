@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -67,6 +68,7 @@ class SettingsActivity : ComponentActivity() {
                 val mode by rememberStringPref(Prefs.THEME, "system")
                 val accent by rememberStringPref(Prefs.ACCENT, "lilac")
                 val engine by rememberStringPref(Prefs.ENGINE, "ddg")
+                val homeMode by rememberStringPref(Prefs.HOME_MODE, "ddg")
                 var cleared by remember { mutableStateOf(false) }
 
                 Scaffold(
@@ -173,6 +175,39 @@ class SettingsActivity : ComponentActivity() {
                                 }
                                 Text(
                                     "O DuckDuckGo não rastreia suas buscas. A mudança vale para as próximas pesquisas.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        item {
+                            Section("Página inicial") {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("ddg" to "DuckDuckGo", "start" to "Do navegador", "custom" to "Personalizada")
+                                        .forEach { (id, label) ->
+                                            FilterChip(
+                                                selected = homeMode == id,
+                                                onClick = { preferences.edit { putString(Prefs.HOME_MODE, id) } },
+                                                label = { Text(label) },
+                                            )
+                                        }
+                                }
+                                if (homeMode == "custom") {
+                                    var custom by remember { mutableStateOf(preferences.getString(Prefs.HOME_CUSTOM, "") ?: "") }
+                                    OutlinedTextField(
+                                        value = custom,
+                                        onValueChange = {
+                                            custom = it
+                                            preferences.edit { putString(Prefs.HOME_CUSTOM, it) }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        label = { Text("Endereço da página inicial") },
+                                        placeholder = { Text("ex.: wikipedia.org") },
+                                    )
+                                }
+                                Text(
+                                    "Aparece ao abrir uma aba nova e no botão Página inicial do menu.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
