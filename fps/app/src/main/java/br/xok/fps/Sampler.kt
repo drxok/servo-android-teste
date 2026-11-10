@@ -30,6 +30,8 @@ class Sampler(private val context: Context) {
     private var lastPid = ""
     private var lastForegroundAt = 0L
     private var foreground: String? = null
+    private var searchWait = 3
+    private var zeroTicks = 0
 
     /** Todos os intervalos entre quadros da sessão, para o 1% low geral. */
     val all = LongList()
@@ -52,13 +54,63 @@ class Sampler(private val context: Context) {
         return foreground
     }
 
+    private fun latencyCmd(name: String) = "dumpsys SurfaceFlinger --latency '${name.replace("'", "")}'"
+
+    private fun parseStamps(out: String): List<Long> {
+        val stamps = ArrayList<Long>()
+        for (line in out.lines().drop(1)) {
+            val cols = line.trim().split(Regex("\\s+"))
+            if (cols.size < 3) continue
+            val t = cols[1].toLongOrNull() ?: continue
+            if (t <= 0L || t == Long.MAX_VALUE) continue
+            stamps.add(t)
+        }
+        return stamps
+    }
+
+    private fun candidates(pkg: String): List<String> =
+        RootShell.run("dumpsys SurfaceFlinger --list").lines().map { it.trim() }.filter {
+            it.isNotEmpty() && it.contains(pkg) && !it.startsWith("Background for") &&
+                !it.startsWith("Bounds for") && !it.startsWith("Dim")
+        }
+
+    /** Testa cada camada do app (com e sem "#0") e fica com a que tem quadros mais recentes. */
     private fun findLayer(pkg: String): String? {
-        val list = RootShell.run("dumpsys SurfaceFlinger --list").lines().map { it.trim() }
-        val cands =
-            list.filter {
-                it.contains(pkg) && !it.startsWith("Background for") && !it.startsWith("Bounds for") && !it.startsWith("Dim")
+        var best: String? = null
+        var bestNewest = 0L
+        for (c in candidates(pkg).take(8)) {
+            for (n in listOf(c, c.replace(Regex("#\\d+$"), "")).distinct()) {
+                val st = parseStamps(RootShell.run(latencyCmd(n)))
+                if (st.size >= 2 && st.last() > bestNewest) {
+                    bestNewest = st.last()
+                    best = n
+                }
             }
-        return cands.firstOrNull { it.startsWith("SurfaceView") } ?: cands.firstOrNull()
+        }
+        return best
+    }
+
+    /** Texto para conferir o que o app está vendo (para copiar e mandar). */
+    fun diagnose(fixed: String?): String {
+        val sb = StringBuilder()
+        val pkg = foregroundPackage(fixed)
+        sb.append("Jogo: ${pkg ?: "(nenhum — escolha o jogo na lista)"}\n\n")
+        if (pkg == null) {
+            sb.append("Camadas do sistema:\n")
+            sb.append(RootShell.run("dumpsys SurfaceFlinger --list").lines().take(60).joinToString("\n"))
+            return sb.toString()
+        }
+        val c = candidates(pkg)
+        sb.append("Camadas do jogo (${c.size}):\n")
+        for (n in c.take(8)) {
+            sb.append("• $n\n")
+            val out = RootShell.run(latencyCmd(n))
+            val lines = out.lines().filter { it.isNotBlank() }
+            sb.append("  linhas: ${lines.size}, válidas: ${parseStamps(out).size}\n")
+            sb.append(lines.take(4).joinToString("\n") { "  $it" }).append("\n")
+        }
+        sb.append("\nEscolhida: ${layer ?: findLayer(pkg) ?: "nenhuma"}\n")
+        return sb.toString()
     }
 
     fun sample(fixedPkg: String?): Sample {
@@ -69,7 +121,10 @@ class Sampler(private val context: Context) {
             prevNewest = 0L
             intervals.clear()
         }
-        if (pkg != null && layer == null) layer = findLayer(pkg)
+        if (pkg != null && layer == null && searchWait++ >= 3) {
+            layer = findLayer(pkg)
+            searchWait = 0
+        }
 
         val sf =
             if (layer != null) "dumpsys SurfaceFlinger --latency '${layer!!.replace("'", "")}'" else "echo"
@@ -85,14 +140,7 @@ class Sampler(private val context: Context) {
 
         // FPS
         var fps = 0
-        val stamps = ArrayList<Long>()
-        for (line in part(0).lines().drop(1)) {
-            val cols = line.trim().split(Regex("\\s+"))
-            if (cols.size < 3) continue
-            val t = cols[1].toLongOrNull() ?: continue
-            if (t <= 0L || t == Long.MAX_VALUE) continue
-            stamps.add(t)
-        }
+        val stamps = parseStamps(part(0))
         if (stamps.isNotEmpty()) {
             val newest = stamps.last()
             val fresh = stamps.filter { it > prevNewest }
@@ -112,6 +160,15 @@ class Sampler(private val context: Context) {
                 fps = stamps.count { it > newest - 1_000_000_000L }
             }
             prevNewest = maxOf(prevNewest, newest)
+        }
+        if (fps == 0 && layer != null) {
+            if (++zeroTicks >= 4) {
+                layer = null
+                zeroTicks = 0
+                searchWait = 3
+            }
+        } else {
+            zeroTicks = 0
         }
         var low1 = 0
         if (intervals.size >= 20) {

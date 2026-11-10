@@ -1,6 +1,9 @@
 package br.xok.fps
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -17,6 +20,7 @@ import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -58,6 +62,11 @@ class MainActivity : Activity() {
         perm.text = "Permitir sobreposição (root)"
         perm.setOnClickListener { grantOverlay() }
         root.addView(perm)
+
+        val diag = Button(this)
+        diag.text = "Diagnóstico (se o FPS não aparecer)"
+        diag.setOnClickListener { runDiagnosis() }
+        root.addView(diag)
 
         root.addView(text("Jogo medido", 16f))
         val spinner = Spinner(this)
@@ -170,6 +179,39 @@ class MainActivity : Activity() {
         }
         startForegroundService(Intent(this, OverlayService::class.java))
         toggle.postDelayed({ refresh() }, 400)
+    }
+
+    private fun runDiagnosis() {
+        Toast.makeText(this, "Coletando… abra o jogo em outra tela e volte", Toast.LENGTH_SHORT).show()
+        Thread {
+            val out =
+                if (!rootOk) "Sem root."
+                else {
+                    try {
+                        Sampler(this).diagnose(Cfg.target(this).ifEmpty { null })
+                    } catch (e: Exception) {
+                        "Erro: $e"
+                    }
+                }
+            runOnUiThread {
+                val tv = TextView(this)
+                tv.text = out
+                tv.textSize = 11f
+                tv.setPadding(dp(16), dp(12), dp(16), dp(12))
+                tv.setTextIsSelectable(true)
+                val sv = ScrollView(this)
+                sv.addView(tv)
+                AlertDialog.Builder(this)
+                    .setTitle("Diagnóstico")
+                    .setView(sv)
+                    .setPositiveButton("Copiar") { _, _ ->
+                        val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("diagnóstico", out))
+                    }
+                    .setNegativeButton("Fechar", null)
+                    .show()
+            }
+        }.start()
     }
 
     private fun grantOverlay() {
