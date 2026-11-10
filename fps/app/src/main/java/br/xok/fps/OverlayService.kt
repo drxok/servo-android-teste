@@ -168,9 +168,23 @@ class OverlayService : Service() {
             sb.append("${s.fps} FPS")
             if (s.low1 > 0) sb.append("  1%: ${s.low1}")
             val l2 = ArrayList<String>()
-            if (Cfg.flag(this, "cpu")) l2.add("CPU ${s.cpu}%" + if (s.gameCpu > 0) " (jogo ${s.gameCpu}%)" else "")
-            if (Cfg.flag(this, "gpu") && s.gpu > 0) l2.add("GPU ${s.gpu}%")
+            val freq = Cfg.flag(this, "freq")
+            if (Cfg.flag(this, "cpu")) {
+                var c = "CPU ${s.cpu}%"
+                if (s.gameCpu > 0) c += " (jogo ${s.gameCpu}%)"
+                val top = s.cpuMhz.maxOrNull() ?: 0
+                if (freq && top > 0) c += " ${fmtFreq(top)}"
+                l2.add(c)
+            }
+            if (Cfg.flag(this, "gpu") && (s.gpu > 0 || s.gpuMhz > 0)) {
+                var g = "GPU ${s.gpu}%"
+                if (freq && s.gpuMhz > 0) g += " ${fmtFreq(s.gpuMhz)}"
+                l2.add(g)
+            }
             if (l2.isNotEmpty()) sb.append("\n").append(l2.joinToString("  "))
+            if (Cfg.flag(this, "cores", false) && s.cpuMhz.any { it > 0 }) {
+                sb.append("\n").append(s.cpuMhz.joinToString(" ") { if (it > 0) "%.1f".format(it / 1000f) else "-" })
+            }
             val l3 = ArrayList<String>()
             if (Cfg.flag(this, "ram")) {
                 var r = "RAM ${"%.1f".format(s.ramUsedMb / 1024f)}/${"%.1f".format(s.ramTotalMb / 1024f)}G"
@@ -182,6 +196,9 @@ class OverlayService : Service() {
         }
         tv.text = sb.toString()
     }
+
+    private fun fmtFreq(mhz: Int): String =
+        if (mhz >= 1000) "%.2fGHz".format(mhz / 1000f) else "${mhz}MHz"
 
     override fun onDestroy() {
         running = false

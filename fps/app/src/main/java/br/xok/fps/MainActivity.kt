@@ -86,11 +86,11 @@ class MainActivity : Activity() {
         loadApps(spinner)
 
         root.addView(text("Mostrar na bolinha", 16f))
-        for ((k, label) in listOf("cpu" to "CPU", "gpu" to "GPU", "ram" to "RAM", "temp" to "Temperatura")) {
+        for ((k, label) in listOf("cpu" to "CPU", "gpu" to "GPU", "freq" to "Frequência da CPU e GPU", "cores" to "Frequência por núcleo da CPU", "ram" to "RAM", "temp" to "Temperatura")) {
             val cb = CheckBox(this)
             cb.text = label
             cb.setTextColor(Color.WHITE)
-            cb.isChecked = Cfg.flag(this, k)
+            cb.isChecked = Cfg.flag(this, k, k != "cores")
             cb.setOnCheckedChangeListener { _, v -> Cfg.setFlag(this, k, v) }
             root.addView(cb)
         }

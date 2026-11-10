@@ -16,6 +16,8 @@ data class Sample(
     val ramTotalMb: Int,
     val gameRamMb: Int,
     val tempC: Float,
+    val cpuMhz: List<Int> = emptyList(),
+    val gpuMhz: Int = 0,
 )
 
 /** Lê FPS (via SurfaceFlinger), CPU, GPU, RAM e temperatura usando root. */
@@ -134,7 +136,10 @@ class Sampler(private val context: Context) {
                 "cat /sys/class/kgsl/kgsl-3d0/gpu_busy_percentage 2>/dev/null; echo @@; " +
                 "grep -E 'MemTotal|MemAvailable' /proc/meminfo; echo @@; " +
                 "$pidCmd; echo \$pid; cat /proc/\$pid/stat 2>/dev/null; echo @@; " +
-                "grep VmRSS /proc/\$pid/status 2>/dev/null"
+                "grep VmRSS /proc/\$pid/status 2>/dev/null; echo @@; " +
+                "for f in /sys/devices/system/cpu/cpu[0-9]*; do echo \$(cat \$f/cpufreq/scaling_cur_freq 2>/dev/null || echo 0); done; echo @@; " +
+                "cat /sys/class/kgsl/kgsl-3d0/gpuclk 2>/dev/null || cat /sys/class/kgsl/kgsl-3d0/devfreq/cur_freq 2>/dev/null || " +
+                "cat /sys/class/devfreq/*gpu*/cur_freq 2>/dev/null | head -1"
         val parts = RootShell.run(cmd).split("@@\n")
         fun part(i: Int) = parts.getOrNull(i) ?: ""
 
@@ -222,6 +227,12 @@ class Sampler(private val context: Context) {
         }
         val gameRam = (Regex("\\d+").find(part(5))?.value?.toLongOrNull() ?: 0L) / 1024
 
+        // frequências
+        val cpuMhz = part(6).lines().mapNotNull { it.trim().toLongOrNull() }.map { (it / 1000).toInt() }
+        var gpuHz = Regex("\\d+").find(part(7))?.value?.toLongOrNull() ?: 0L
+        if (gpuHz in 1..2_000_000) gpuHz *= 1000 // alguns aparelhos informam em kHz
+        val gpuMhz = (gpuHz / 1_000_000).toInt()
+
         // temperatura (bateria)
         val bat = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val temp = (bat?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f
@@ -237,6 +248,8 @@ class Sampler(private val context: Context) {
             ramTotalMb = (totalKb / 1024).toInt(),
             gameRamMb = gameRam.toInt(),
             tempC = temp,
+            cpuMhz = cpuMhz,
+            gpuMhz = gpuMhz,
         )
     }
 }
