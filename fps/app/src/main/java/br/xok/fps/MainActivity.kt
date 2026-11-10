@@ -30,6 +30,7 @@ class MainActivity : Activity() {
     private lateinit var toggle: Button
     private lateinit var history: TextView
     private var rootOk = false
+    private lateinit var shizukuBtn: Button
     private val apps = ArrayList<Pair<String, String>>() // rótulo, pacote
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -59,9 +60,20 @@ class MainActivity : Activity() {
         root.addView(toggle)
 
         val perm = Button(this)
-        perm.text = "Permitir sobreposição (root)"
+        perm.text = "Permitir sobreposição (automático)"
         perm.setOnClickListener { grantOverlay() }
         root.addView(perm)
+
+        shizukuBtn = Button(this)
+        shizukuBtn.text = "Conceder acesso ao Shizuku"
+        shizukuBtn.setOnClickListener {
+            if (!RootShell.shizukuRunning()) {
+                Toast.makeText(this, "Abra o app Shizuku e inicie o serviço primeiro", Toast.LENGTH_LONG).show()
+            } else {
+                RootShell.requestShizuku()
+            }
+        }
+        root.addView(shizukuBtn)
 
         val diag = Button(this)
         diag.text = "Diagnóstico (se o FPS não aparecer)"
@@ -122,6 +134,13 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
+        Thread {
+            val ok = RootShell.available()
+            runOnUiThread {
+                rootOk = ok
+                refresh()
+            }
+        }.start()
     }
 
     private fun loadApps(spinner: Spinner) {
@@ -153,8 +172,9 @@ class MainActivity : Activity() {
     private fun refresh() {
         val overlay = Settings.canDrawOverlays(this)
         status.text =
-            "Root: " + (if (rootOk) "ok" else "não concedido (abra o Magisk e permita)") +
+            "Acesso: " + (if (rootOk) "ok (${RootShell.label})" else "nenhum — permita o root no Magisk ou conceda o Shizuku") +
                 "\nSobreposição: " + (if (overlay) "permitida" else "falta permitir")
+        shizukuBtn.visibility = if (rootOk) View.GONE else View.VISIBLE
         toggle.text = if (OverlayService.active) "Parar contador" else "Iniciar contador"
         val fmt = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
         val list = Sessions.load(this)
@@ -185,7 +205,7 @@ class MainActivity : Activity() {
         Toast.makeText(this, "Coletando… abra o jogo em outra tela e volte", Toast.LENGTH_SHORT).show()
         Thread {
             val out =
-                if (!rootOk) "Sem root."
+                if (!rootOk) "Sem acesso (root ou Shizuku)."
                 else {
                     try {
                         Sampler(this).diagnose(Cfg.target(this).ifEmpty { null })
