@@ -10,7 +10,7 @@ on:
     inputs:
       servo_ref:
         description: "Versão do Servo (commit, branch ou tag)"
-        default: "e7d4eceb24f57451e4e25d48e273294a540951c1"
+        default: "002231f14d7f8f9d1a8e92a924d14e4b8cb24006"
       ndk_version:
         description: "Versão do NDK do Android"
         default: "29.0.14206865"
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 360
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      SERVO_REF: ${{ inputs.servo_ref || 'e7d4eceb24f57451e4e25d48e273294a540951c1' }}
+      SERVO_REF: ${{ inputs.servo_ref || '002231f14d7f8f9d1a8e92a924d14e4b8cb24006' }}
       NDK_VERSION: ${{ inputs.ndk_version || '29.0.14206865' }}
       PERFIL: ${{ inputs.perfil || 'release' }}
       CACHE_SUFFIX: ${{ (inputs.perfil || 'release') == 'release' && '' || format('-{0}', inputs.perfil) }}
