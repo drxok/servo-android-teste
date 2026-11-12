@@ -416,24 +416,11 @@ edit(
     [('        <activity android:name=".HistoryActivity"',
       '        <activity android:name=".DownloadsActivity"\n            android:configChanges="density|keyboardHidden|navigation|orientation|screenSize|uiMode"\n            android:exported="true"\n            android:theme="@style/AppTheme">\n        </activity>\n        <activity android:name=".HistoryActivity"')],
 )
-# --- Preferências: cache em disco, WebGL2, editores de texto e menos memória ---
+# --- Preferências (só o que não pesa): editores de texto e histórico menor ---
 edit("ports/servoshell/egl/android/mod.rs", [(
     '        preferences.set_value("viewport_meta_enabled", servo::PrefValue::Bool(true));\n',
     '        preferences.set_value("viewport_meta_enabled", servo::PrefValue::Bool(true));\n'
-    '        if let Some(dir) = crate::prefs::default_config_dir() {\n'
-    '            let cache = dir.join("http-cache.sqlite3");\n'
-    '            preferences.set_value(\n'
-    '                "network_http_disk_cache",\n'
-    '                servo::PrefValue::Str(cache.to_string_lossy().into_owned()),\n'
-    '            );\n'
-    '            preferences.set_value(\n'
-    '                "network_http_disk_cache_size",\n'
-    '                servo::PrefValue::UInt(200 * 1024 * 1024),\n'
-    '            );\n'
-    '        }\n'
-    '        preferences.set_value("dom_webgl2_enabled", servo::PrefValue::Bool(true));\n'
     '        preferences.set_value("dom_exec_command_enabled", servo::PrefValue::Bool(true));\n'
-    '        preferences.set_value("js_mem_gc_malloc_threshold_base_mb", servo::PrefValue::Int(24));\n'
     '        preferences.set_value("session_history_max_length", servo::PrefValue::Int(10));\n',
 )])
 print("preferências aplicadas")
